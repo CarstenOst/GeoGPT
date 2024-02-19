@@ -1,0 +1,2 @@
+# GeoGPT
+Søkefunksjon for Kartverket
