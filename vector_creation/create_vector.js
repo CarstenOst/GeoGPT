@@ -1,97 +1,75 @@
-const fetchEmbedding =  require("../helpers/fetch_openai_embeddings_api");
-const {fetchOpenAIEmbeddings} = fetchEmbedding
+const fetchEmbedding = require("../helpers/fetch_openai_embeddings_api");
+const { fetchOpenAIEmbeddings } = fetchEmbedding;
+const fs = require('fs'); // Import fs for stream-based operations
+const fsPromises = fs.promises; // Use fs.promises for promise-based file operations
+const csv = require('fast-csv'); // Ensure fast-csv is installed
 
-const config = require('../config.js');
-const { api: { openai_embedding_api_key } } = config;
+async function readTitlesFromCSV(filePath) {
+  const titles = [];
+  return new Promise((resolve, reject) => {
+    fs.createReadStream(filePath)
+      .pipe(csv.parse({ headers: true, delimiter: '|' }))
+      .on('error', error => reject(error))
+      .on('data', row => titles.push(row.title))
+      .on('end', rowCount => resolve(titles));
+  });
+}
 
-const fs = require('fs').promises;
+async function writeEmbeddingsToCSV(filePath, data) {
+  return new Promise((resolve, reject) => {
+    const stream = fs.createWriteStream(filePath);
+    const csvStream = csv.format({
+      headers: true,
+      delimiter: '|'});
+    csvStream.pipe(stream).on('end', () => resolve()).on('error', error => reject(error));
 
+    data.forEach(row => {
+      csvStream.write(row);
+    });
+
+    csvStream.end();
+  });
+}
 
 async function fetchAndLogEmbedding() {
   try {
-    let embedding = await fetchOpenAIEmbeddings(['Artsfunn', 'Tilfluktsrom'], openai_embedding_api_key);
-    console.log(embedding);
+    // Assuming titles.csv is your file with titles
+    const titlesFilePath = './cleaned_metadata.csv';
+    const titles = await readTitlesFromCSV(titlesFilePath);
+    //console.log(titles);
+    const csvfile = [];
+    await new Promise((resolve, reject) => {
+      fs.createReadStream(titlesFilePath)
+        .pipe(csv.parse({ headers: true, delimiter: '|' }))
+        .on('error', error => reject(error))
+        .on('data', row => csvfile.push(row))
+        .on('end', rowCount => resolve(csvfile));
+    });
 
-    // Path to your JSON file
-    const filePath = './data.json';
 
-    // Read the existing file or start with an empty array if the file does not exist
-    let data = [];
-    try {
-      const fileContent = await fs.readFile(filePath, 'utf8');
-      data = JSON.parse(fileContent);
-    } catch (error) {
-      if (error.code !== 'ENOENT') throw error; // Ignore file not found error to start with an empty array
-    }
+    // Fetch embeddings for all titles
+    const embeddingResponse = await fetchOpenAIEmbeddings(titles);
 
-    // Append the new data
-    data.push(embedding);
 
-    // Write the updated data back to the file
-    await fs.writeFile(filePath, JSON.stringify(data, null, 2), 'utf8');
-    console.log('Embedding data appended to file.');
+
+    const embeddings = embeddingResponse.data; // Json
+
+    // Prepare data for CSV by keeping the title
+    const dataForCSV = embeddings.map(embedding => ({
+      ...csvfile[embedding.index], // WHAT IS THIS MAGIC?
+      title_vector: JSON.stringify(embedding.embedding)
+
+    }));
+    console.log('Here is data for CSV')
+    console.log(dataForCSV);
+
+    // Assuming embeddings.csv is your target CSV file
+    await writeEmbeddingsToCSV('./embeddings.csv', dataForCSV);
+    console.log('Embeddings written to CSV.');
 
   } catch (error) {
     console.error('Error:', error);
   }
 }
 
-//fetchAndLogEmbedding();
-
-
-
-
-
-
-async function appendDataFromJsonFile(targetFilePath, dataInput) {
-  try {
-    // Read and parse the source JSON file
-    const sourceData = dataInput //await fs.readFile(sourceFilePath, 'utf8');
-    const newEntry = sourceData
-
-    // Attempt to read the target file and parse the JSON, or start with a new array/object if the file doesn't exist
-    let jsonData;
-    try {
-      const data = await fs.readFile(targetFilePath, 'utf8');
-      jsonData = JSON.parse(data);
-    } catch (error) {
-      // If the file does not exist or can't be read, determine a default structure based on newEntry
-      jsonData = Array.isArray(newEntry) ? [] : {};
-    }
-
-    // Check if jsonData is an array or an object and append/merge accordingly
-    if (Array.isArray(jsonData)) {
-      // If jsonData is an array, append newEntry to it
-      jsonData.push(newEntry);
-      console.log('is array');
-
-    } else if (typeof jsonData === 'object') {
-      console.log('is array');
-      // If jsonData is an object, merge or add newEntry as a new key
-      // Example: Adding newEntry under a unique key. Adjust as needed.
-      const newKey = `entry_${Date.now()}`; // Create a unique key based on the current timestamp
-      jsonData[newKey] = newEntry;
-    }
-
-    // Write the modified JSON back to the file
-    await fs.writeFile(targetFilePath, JSON.stringify(jsonData, null, 2), 'utf8');
-    console.log('JSON data from ' + dataInput + ' appended to ' + targetFilePath + ' successfully.');
-  } catch (error) {
-    console.error('Error appending data:', error);
-  }
-}
-
-// Example usage:
-const targetFilePath = 'singular_vector.json';
-const dataInput = {ev: 'yuh', evv: 'yuh'}
-//appendDataFromJsonFile(targetFilePath, dataInput);
-
-const addColumnToCsv = require('../helpers/add_csv_column.js');
-
-const inputCsvFilePath = './csvtestcreation.csv';
-const outputCsvFilePath = './output_file.csv';
-const newColumnName = 'VectorColumn';
-const defaultValue = 'nan';
-
-// Call the function
-addColumnToCsv(inputCsvFilePath, outputCsvFilePath, newColumnName, defaultValue);
+fetchAndLogEmbedding();
