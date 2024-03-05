@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Vector Search</title>
+</head>
+<body>
+<h1>Vector Search</h1>
+<form id="searchForm">
+    <input type="text" id="searchInput" placeholder="Enter text for search">
+    <button type="submit">Search</button>
+</form>
+<div id="results"></div>
+
+<script>
+    document.getElementById('searchForm').onsubmit = async (e) => {
+        e.preventDefault();
+        const inputText = document.getElementById('searchInput').value;
+        const response = await fetch('http://localhost:3000/search', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({ inputText })
+        });
+        const results = await response.json();
+        document.getElementById('results').innerText = JSON.stringify(results, null, 2);
+    };
+</script>
+</body>
+</html>
