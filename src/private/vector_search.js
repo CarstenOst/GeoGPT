@@ -1,44 +1,64 @@
+const express = require('express');
+const app = express();
+const port = 3000;
+const cors = require('cors');
+app.use(cors());
+
+
+// Import the necessary modules
 const fetchEmbedding = require("../../helpers/fetch_openai_embeddings_api");
 const { fetchOpenAIEmbeddings } = fetchEmbedding;
 const pgvector = require('pgvector/pg');
-
-// Import the client and connectClient function from connection.js
 const { client, connectClient } = require('../../helpers/connection.js');
 
-// Headless function, could add a function name for more readability, but but
-(async () => {
+// Middleware to parse JSON request bodies
+app.use(express.json());
+
+// Define the search endpoint
+app.post('/search', async (req, res) => {
   try {
-    // DB connected
+    // Ensure DB connection
     await connectClient();
 
-    // Create the vector extension
+    // Register pgvector type
     await pgvector.registerType(client);
 
-    // Get the vectorized input from the user
-    const vectorizedInputFromUser = fetchOpenAIEmbeddings["inputText"];
+    // Extract the input text from the request body
+    const inputText = req.body.inputText;
 
-    // Searches
-    const searchVector = [pgvector.toSql(vectorizedInputFromUser)]
-      const { rows } = await client.query(
-      `SELECT id, title, title_vector <-> $1 
-                AS distance 
-                FROM text_embedding_3_large 
-                ORDER BY title_vector <-> $1 LIMIT 5`,
-      searchVector
-    );
-    // Show the search result
-    console.log('Query Results:', rows);
+    // Get the vectorized input from OpenAI (or your embedding function)
+    const jsonInputFromOpenAi = await fetchOpenAIEmbeddings(inputText);
+    const vectorizedInputFromUser = jsonInputFromOpenAi.data[0].embedding;
 
-    // Indexes for faster search (max 2000 dimensions)
-    //await client.query('CREATE INDEX ON text_embedding_3_large USING hnsw (title_vector vector_l2_ops)');
-    // or IVFFLAT (uses less memory and might be faster, but is less accurate, therefore hnsw is the current method
-    // that we use
-    //await client.query('CREATE INDEX ON text_embedding_3_large USING ivfflat (title_vector vector_l2_ops) WITH (lists = 100)');
+
+    const response = await vectorSearch(vectorizedInputFromUser);
+
+    // Search for the closest vectors in the database, and respond with the results
+    res.json(response)
+
 
   } catch (error) {
     console.error('An error occurred:', error);
-  } finally {
-    // Close the client connection
-    await client.end();
+    res.status(500).send('Internal Server Error');
   }
-})();
+});
+
+// Start the server
+app.listen(port, () => {
+  console.log(`Server running at http://localhost:${port}`);
+});
+
+
+
+async function vectorSearch(vectorArray){
+  // Perform the search with the vectorized input
+  const searchVector = [pgvector.toSql(vectorArray)];
+  const { rows } = await client.query(
+    `SELECT id, title, title_vector <-> $1 AS distance 
+       FROM text_embedding_3_large 
+       ORDER BY title_vector <-> $1 LIMIT 5`,
+    searchVector
+  );
+
+  return rows;
+}
