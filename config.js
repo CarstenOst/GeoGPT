@@ -11,7 +11,8 @@ const config = {
     password: 'asd',
   },
   api: {
-    openai_embedding: '',
+    openai_embedding_api_key: 'sk-',
+    model: 'text-embedding-3-large',
   }
 };
 
