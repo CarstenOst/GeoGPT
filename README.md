@@ -12,7 +12,7 @@ Search function for "Kartverket"
    - user:asd
    - password:asd
    - database:postgres
-4. Run ```npm i``` in terminal
+4. Run ```npm i``` in terminal (root folder)
 5. Run insert_csv.js in the folder "vector_insertion" (```node insert_csv.js```)
 6. Populate the config with api key
 7. Navigate to src/private and run node vector_search.js
