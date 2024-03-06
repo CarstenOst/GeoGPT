@@ -21,8 +21,26 @@
             headers: {'Content-Type': 'application/json'},
             body: JSON.stringify({ inputText })
         });
-        const results = await response.json();
-        document.getElementById('results').innerText = JSON.stringify(results, null, 2);
+        let results = await response.json();
+
+        // This is the UI part of the code
+        let htmlWithUrl = results.map((result) => { // Same as a for-loop, but more concise
+            // Start with the link for metadata
+            let html = `<a href="https://kartkatalog.geonorge.no/metadata/${encodeURIComponent(result.title)}/${result.uuid}" target="_blank">Metadata for ${result.title}</a><br/>`;
+
+            // Add other data from the result
+            Object.keys(result).forEach(key => {
+                if (key !== 'title' && key !== 'uuid') { // Exclude title and uuid since they're already used
+                    html += `<strong>${key}:</strong> ${result[key]}<br/>`;
+                }
+            });
+
+            return html + '<br/>'; // Add extra line break for spacing between items
+        }).join('');
+
+        // Inject the HTML into the results container
+        document.getElementById('results').innerHTML = htmlWithUrl;
+
     };
 </script>
 </body>
