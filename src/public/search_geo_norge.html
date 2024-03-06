@@ -1,47 +1,149 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
-    <title>Vector Search</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Search Page</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+            height: 100vh;
+            /* Topology background image */
+            background-image: url("./abstract-topographic-map-background-abstract-topographic-map-background-imitation-of-a-geographical-map-geographic-map-conceptual-design-elegant-background-for-presentations-free-vector.jpg");
+            background-size: cover;
+            background-repeat: no-repeat;
+        }
+
+        .search-container {
+            display: flex;
+            align-items: center;
+            width: 60%;
+            border: 3px solid rgb(0, 89, 254);
+            border-radius: 20px;
+            margin-bottom: 20px;
+        }
+
+        .search-input {
+            flex: 1;
+            border: none;
+            padding: 10px;
+            border-top-left-radius: 20px;
+            border-bottom-left-radius: 20px;
+            outline: none;
+        }
+
+        .search-button {
+            background-color: rgb(0, 89, 254);
+            border: none;
+            color: white;
+            padding: 10px 20px;
+            border-top-right-radius: 20px;
+            border-bottom-right-radius: 20px;
+            cursor: pointer;
+        }
+
+        #results {
+            flex: flex;
+            flex-wrap: wrap;
+            width: 60%;
+            overflow-y: auto;
+            background-color: white;
+            border-radius: 20px;
+            margin: 20px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+            margin-bottom: auto;
+            /* Pushes the results to the top */
+        }
+
+        .result-item {
+            background-color: #f9f9f9;
+            border-radius: 10px;
+            padding: 10px;
+            margin: 10px;
+            text-align: center;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+        }
+
+        .result-item a {
+            color: #007bff;
+            text-decoration: none;
+        }
+
+        .result-item a:hover {
+            text-decoration: underline;
+        }
+
+        /* Resets paddings for horizontal alignment */
+        .result-item h3,
+        .result-item p,
+        .result-item a {
+            margin: 0;
+            padding: 0;
+        }
+    </style>
 </head>
+
 <body>
-<h1>Vector Search</h1>
-<form id="searchForm">
-    <input type="text" id="searchInput" placeholder="Enter text for search">
-    <button type="submit">Search</button>
-</form>
-<div id="results"></div>
 
-<script>
-    document.getElementById('searchForm').onsubmit = async (e) => {
-        e.preventDefault();
-        const inputText = document.getElementById('searchInput').value;
-        const response = await fetch('http://localhost:3000/search', {
-            method: 'POST',
-            headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify({ inputText })
-        });
-        let results = await response.json();
+    <div id="results">
+        <!-- Results will be displayed here -->
+    </div>
 
-        // This is the UI part of the code
-        let htmlWithUrl = results.map((result) => { // Same as a for-loop, but more concise
-            // Start with the link for metadata
-            let html = `<a href="https://kartkatalog.geonorge.no/metadata/${encodeURIComponent(result.title)}/${result.uuid}" target="_blank">Metadata for ${result.title}</a><br/>`;
+    <form id="searchForm" class="search-container">
+        <input type="text" id="searchInput" class="search-input" placeholder="Enter your search query">
+        <button type="submit" class="search-button">Search</button>
+    </form>
 
-            // Add other data from the result
-            Object.keys(result).forEach(key => {
-                if (key !== 'title' && key !== 'uuid') { // Exclude title and uuid since they're already used
-                    html += `<strong>${key}:</strong> ${result[key]}<br/>`;
-                }
+    <script>
+        document.getElementById('searchForm').onsubmit = async (e) => {
+            e.preventDefault();
+            const inputText = document.getElementById('searchInput').value;
+            const response = await fetch('http://localhost:3000/search', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ inputText })
             });
+            let results = await response.json();
 
-            return html + '<br/>'; // Add extra line break for spacing between items
-        }).join('');
 
-        // Inject the HTML into the results container
-        document.getElementById('results').innerHTML = htmlWithUrl;
+            const view_results = results.map((result) => ({
+                ...result,
+                url: `https://kartkatalog.geonorge.no/metadata/${result.title}/${result.uuid}`,
+            }));
 
-    };
-</script>
+            const results_div = document.getElementById('results');
+            // Clears previous results
+            results_div.innerHTML = ''; 
+
+            view_results.forEach((result) => {
+                const result_div = document.createElement('div');
+                result_div.classList.add('result-item'); // Add class 'result-item' to the div
+
+                const title_h3 = document.createElement('h3');
+                title_h3.textContent = result.title; // Set the title text
+                result_div.appendChild(title_h3); // Append the title to the result div
+
+                const distance_p = document.createElement('p');
+                distance_p.textContent = `Distance: ${result.distance}`; // Set the distance text
+                result_div.appendChild(distance_p); // Append the distance to the result div
+
+                const metadata_a = document.createElement('a');
+                metadata_a.href = result.url; // Set the URL for the metadata link
+                metadata_a.target = '_blank'; // Open in a new tab
+                metadata_a.textContent = 'View Metadata'; // Set the text for the metadata link
+                result_div.appendChild(metadata_a); // Append the metadata link to the result div
+
+                results_div.appendChild(result_div); // Append the result div to the results container
+            });
+        };
+    </script>
+
 </body>
+
 </html>
