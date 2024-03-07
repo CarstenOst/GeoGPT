@@ -1,7 +1,6 @@
 const config = require('../config.js');
 const { api: {model, openai_embedding_api_key} } = config;
 const fs = require('fs');
-const path = require('path');
 
 
 
@@ -31,7 +30,7 @@ module.exports = { fetchOpenAIEmbeddings };
 
 
 function appendToCsv(stringInput){
-  fs.appendFile('./sokLog.csv', stringInput, (err) => {
+  fs.appendFile('./sokLog.csv', stringInput + '\n', (err) => {
     if (err) {
       console.error('Error appending to the CSV file:', err);
       return;
