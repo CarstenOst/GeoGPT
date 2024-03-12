@@ -1,19 +1,28 @@
-const fetchEmbedding = require("../helpers/fetch_openai_embeddings_api");
+const fetchEmbedding= require("../helpers/fetch_openai_embeddings_api");
+const config = require('../config.js');
+const csv = require('fast-csv');
+const fs = require('fs'); // stream-based operations
+const fsPromises = fs.promises; // file operations
+const { api: {model} } = config;
 const { fetchOpenAIEmbeddings } = fetchEmbedding;
-const fs = require('fs'); // Import fs for stream-based operations
-const fsPromises = fs.promises; // Use fs.promises for promise-based file operations
-const csv = require('fast-csv'); // Ensure fast-csv is installed
 
-async function readTitlesFromCSV(filePath) {
-  const titles = [];
+
+async function readCombinedColumnsFromCSV(filePath, columnsToCombine) {
+  const combinedTexts = [];
   return new Promise((resolve, reject) => {
     fs.createReadStream(filePath)
-      .pipe(csv.parse({ headers: true, delimiter: '|' }))
-      .on('error', error => reject(error))
-      .on('data', row => titles.push(row.title))
-      .on('end', rowCount => resolve(titles));
+        .pipe(csv.parse({ headers: true, delimiter: '|' }))
+        .on('error', error => reject(error))
+        .on('data', row => {
+          // Combine specified columns
+          const combinedText = columnsToCombine.map(column => row[column]).join(" ");
+          combinedTexts.push(combinedText);
+        })
+        .on('end', rowCount => resolve(combinedTexts));
+
   });
 }
+
 
 async function writeEmbeddingsToCSV(filePath, data) {
   return new Promise((resolve, reject) => {
@@ -31,45 +40,50 @@ async function writeEmbeddingsToCSV(filePath, data) {
   });
 }
 
-async function fetchAndLogEmbedding() {
+/**
+ * Fetch and write embeddings to a copy of the csv used
+ * Note Delimiter is pipe '|'
+ *
+ * @param csvDatasetFilePath String of the dataset as csv filepath
+ * @param titlesToCombine Array of titles to be used
+ * @returns {Promise<string>}
+ */
+async function fetchAndLogEmbedding(csvDatasetFilePath, titlesToCombine) {
   try {
-    // Assuming titles.csv is your file with titles
-    const titlesFilePath = './cleaned_metadata.csv';
-    const titles = await readTitlesFromCSV(titlesFilePath);
+
+    const combinedTitles = await readCombinedColumnsFromCSV(csvDatasetFilePath, titlesToCombine)
+
     //console.log(titles);
-    const csvfile = [];
+    const csvFile = [];
     await new Promise((resolve, reject) => {
-      fs.createReadStream(titlesFilePath)
+      fs.createReadStream(csvDatasetFilePath)
         .pipe(csv.parse({ headers: true, delimiter: '|' }))
         .on('error', error => reject(error))
-        .on('data', row => csvfile.push(row))
-        .on('end', rowCount => resolve(csvfile));
+        .on('data', row => csvFile.push(row))
+        .on('end', rowCount => resolve(csvFile));
     });
 
-
-    // Fetch embeddings for all titles
-    const embeddingResponse = await fetchOpenAIEmbeddings(titles);
-
-
-
+    //return combinedTitles;
+    // Fetch embeddings
+    const embeddingResponse = await fetchOpenAIEmbeddings(combinedTitles);
     const embeddings = embeddingResponse.data; // Json
 
-    // Prepare data for CSV by keeping the title
+    // Combine the used dataset with the newly created vectors
     const dataForCSV = embeddings.map(embedding => ({
-      ...csvfile[embedding.index], // WHAT IS THIS MAGIC?
-      title_vector: JSON.stringify(embedding.embedding)
+      ...csvFile[embedding.index], // WHAT IS THIS SORCERY!?
+      combined_title_vector: JSON.stringify(embedding.embedding)
 
     }));
     console.log('Here is data for CSV')
-    console.log(dataForCSV);
-
+    //console.log(dataForCSV);
     // Assuming embeddings.csv is your target CSV file
-    await writeEmbeddingsToCSV('./embeddings.csv', dataForCSV);
+    await writeEmbeddingsToCSV(`./${model}.csv`, dataForCSV);
     console.log('Embeddings written to CSV.');
 
   } catch (error) {
     console.error('Error:', error);
   }
 }
+fetchAndLogEmbedding('embeddings.csv', ['title', 'keyword']).then(res => console.log(JSON.stringify(res))).catch(err => console.error(err));
 
-fetchAndLogEmbedding();
+
