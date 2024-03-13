@@ -1,3 +1,4 @@
+const fetch = require("node-fetch");
 const config = require('../config.js');
 const { api: {model, openai_embedding_api_key} } = config;
 const fs = require('fs');
