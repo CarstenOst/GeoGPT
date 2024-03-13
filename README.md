@@ -12,11 +12,12 @@ Search function for "Kartverket"
    - user:asd
    - password:asd
    - database:postgres
-4. Run ```npm i``` in terminal (root folder)
-5. Run insert_csv.js in the folder "vector_insertion" (```node insert_csv.js```)
-6. Populate the config with api key
-7. Navigate to src/private and run node vector_search.js
-8. Navigate to src/public and open search_geo_norge.html in browser
+4. Run ```vdb_setup.sql```
+5. Run ```npm i``` in terminal (root folder)
+6. Run insert_csv.js in the folder "vector_insertion" (```node insert_csv.js```)
+7. Populate the config with api key
+8. Navigate to src/private and run node vector_search.js
+9. Navigate to src/public and open search_geo_norge.html in browser
 
 ### Queries
 See [pgvector](https://github.com/pgvector/pgvector?tab=readme-ov-file#docker)

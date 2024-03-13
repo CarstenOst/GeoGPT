@@ -11,8 +11,8 @@ const knex = require('knex')({
   }
 });
 
-const tableName = 'text_embedding_3_large'; // Adjust according to your actual table name
-const filePath = './vector_creation/embeddings.csv'; // Adjust according to your actual file path
+const tableName = 'text_embedding_3_large_title_keyword'; // Adjust according to your actual table name
+const filePath = '../vector_creation/text-embedding-3-large_title-keyword.csv'; // Adjust according to your actual file path
 
 async function insertCSVData(filePath, tableName) {
   const dataToInsert = [];
