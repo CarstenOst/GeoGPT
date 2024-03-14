@@ -84,6 +84,75 @@ async function fetchAndLogEmbedding(csvDatasetFilePath, titlesToCombine) {
     console.error('Error:', error);
   }
 }
-fetchAndLogEmbedding('embeddings.csv', ['title', 'keyword']).then(res => console.log(JSON.stringify(res))).catch(err => console.error(err));
+//fetchAndLogEmbedding('embeddings.csv', ['title', 'keyword']).then(res => console.log(JSON.stringify(res))).catch(err => console.error(err));
 
 
+
+
+async function extractMultipleColumnsModifyHeadersAndCreateNewCSV(filePath, columnNames, outputFilename) {
+  // Array for storage of 'original' dataset
+  const rows = [];
+
+  return new Promise((resolve, reject) => {
+    fs.createReadStream(filePath)
+      .pipe(csv.parse({ headers: true, delimiter: '|' }))
+      .on('error', error => reject(error))
+      .on('data', row => {
+        rows.push(row);
+      })
+      .on('end', async () => {
+
+        // Stores column row embeddings (columnName : [embeddingsArray])
+        const columnEmbeddings = {};
+        for (const columnName of columnNames) {
+          // Gets the rows in array format
+          const columnRows = rows.map(row => row[columnName]);
+
+          // Sends row array to API, then stores embedding arrays for the column rows
+          try {
+              const embeddings = await fetchOpenAIEmbeddings(columnRows);
+              console.log(`Embeddings for: ${columnName}`);
+              console.log(embeddings);
+              const embeddingArrays = embeddings.data.map(element => element.embedding);
+              columnEmbeddings[columnName + '_vector'] = embeddingArrays;
+              
+          } catch (error) {
+              console.error(`Error fetching embeddings for ${columnName}:`, error);
+          }
+        };
+
+
+        // Appends each extracted column with the embeddings header to the original rows
+        const rowsWithModifiedColumns = rows.map((row, index) => {
+          // "Imports" original row data using the spread operator
+          const modifiedRow = { 
+            ...row 
+          };
+
+          // Appends extracted embeddings array to the row, by index
+          columnNames.forEach(columnName => {
+            const modifiedColumnName = `${columnName}_vector`;
+            modifiedRow[modifiedColumnName] = [columnEmbeddings[modifiedColumnName][index]];
+          });
+
+          return modifiedRow;
+        });
+
+
+        // Write the new data to a CSV file
+        const ws = fs.createWriteStream(outputFilename);
+        csv.write(rowsWithModifiedColumns, { headers: true, delimiter: '|' }).pipe(ws);
+
+        resolve();
+      });
+  });
+}
+
+
+// Appends columns with embeddings for 'columnsToVectorise', outputs to 'vectorisedColumnsDataset' filename with '|' separator
+// Currently the API only accepts the three columns 'title', 'abstract', 'keyword'
+const columnsToVectorise = ['title', 'abstract', 'keyword']; //, 'geoBox', 'Constraints', 'SecurityConstraints', 'SecurityConstraints', 'LegalConstraints', 'responsibleParty'];
+const vectorisedColumnsDataset = 'all_columns_vectorized.csv';
+extractMultipleColumnsModifyHeadersAndCreateNewCSV('../truncated_dataset.csv', columnsToVectorise, vectorisedColumnsDataset)
+  .then(() => console.log('Columns extracted, modified, and new CSV file created.'))
+  .catch(error => console.error('Error:', error));
