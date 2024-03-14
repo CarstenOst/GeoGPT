@@ -21,7 +21,8 @@ const fetchOpenAIEmbeddings = async (inputText) => {
   });
 
   if (!response.ok) {
-    throw new Error('Network response failed');
+    const errorBody = await response.text();
+    throw new Error(`Network response failed: ${response.status} ${response.statusText} - ${errorBody}`);
   }
 
   return response.json();
