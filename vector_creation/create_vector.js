@@ -111,8 +111,6 @@ async function extractMultipleColumnsModifyHeadersAndCreateNewCSV(filePath, colu
           // Sends row array to API, then stores embedding arrays for the column rows
           try {
               const embeddings = await fetchOpenAIEmbeddings(columnRows);
-              console.log(`Embeddings for: ${columnName}`);
-              console.log(embeddings);
               const embeddingArrays = embeddings.data.map(element => element.embedding);
               columnEmbeddings[columnName + '_vector'] = embeddingArrays;
               
