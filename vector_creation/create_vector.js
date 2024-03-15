@@ -130,7 +130,7 @@ async function appendColumnsEmbeddings(filePath, columnNames, outputFilename) {
           // Appends extracted embeddings array to the row, by index
           columnNames.forEach(columnName => {
             const modifiedColumnName = `${columnName}_vector`;
-            modifiedRow[modifiedColumnName] = [columnEmbeddings[modifiedColumnName][index]];
+            modifiedRow[modifiedColumnName] = `[${columnEmbeddings[modifiedColumnName][index]}]`;
           });
 
           return modifiedRow;
@@ -150,7 +150,7 @@ async function appendColumnsEmbeddings(filePath, columnNames, outputFilename) {
 // Appends columns with embeddings for 'columnsToVectorise', outputs to 'vectorisedColumnsDataset' filename with '|' separator
 // Currently the API only accepts the three columns 'title', 'abstract', 'keyword'
 const inputDatasetPath = '../cleaned_metadata.csv'
-const columnsToVectorise = ['title', 'abstract', 'keyword']; //, 'geoBox', 'Constraints', 'SecurityConstraints', 'SecurityConstraints', 'LegalConstraints', 'responsibleParty'];
+const columnsToVectorise = ['title', 'abstract', 'keyword']; //, 'geoBox', 'Constraints', 'SecurityConstraints', 'LegalConstraints', 'responsibleParty'];
 const vectorisedColumnsDataset = 'all_columns_vectorized.csv';
 appendColumnsEmbeddings(inputDatasetPath, columnsToVectorise, vectorisedColumnsDataset)
   .then(() => console.log('Columns extracted, modified, and new CSV file created.'))
