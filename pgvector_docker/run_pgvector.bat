@@ -18,13 +18,3 @@ docker run -d --name %CONTAINER_NAME% ^
   -p 5432:5432 %IMAGE_NAME%
 
 echo  pgvector PostgreSQL container is running.
-
-echo Waiting for PostgreSQL to start...
-timeout /t 10
-
-echo Connecting to the database and executing setup SQL...
-docker exec -i pgvector_container psql -U asd -d postgres -c "CREATE EXTENSION IF NOT EXISTS vector; CREATE TABLE IF NOT EXISTS text_embedding_3_large ( db_id SERIAL primary key, schema TEXT, uuid TEXT, id INT, hierarchyLevel TEXT, title TEXT, datasetcreationdate TEXT, abstract TEXT, keyword TEXT, geoBox TEXT, constraints TEXT, SecurityConstraints TEXT, LegalConstraints TEXT, temporalExtent TEXT, image TEXT, responsibleParty TEXT, link TEXT, metadatacreationdate TEXT, productInformation TEXT, parentId TEXT, title_vector vector(3072) );"
-
-echo Setup SQL executed.
-
-echo pgvector PostgreSQL container is running.

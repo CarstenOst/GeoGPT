@@ -16,35 +16,3 @@ sleep 10
 
 # Connect to the database and execute setup SQL
 echo "Connecting to the database and executing setup SQL..."
-docker exec -i pgvector_container psql -U asd -d postgres <<EOF
-CREATE EXTENSION IF NOT EXISTS vector;
-
-CREATE TABLE IF NOT EXISTS text_embedding_3_large
-(
-    db_id                SERIAL primary key,
-    schema               TEXT,
-    uuid                 TEXT,
-    id                   INT,
-    hierarchyLevel       TEXT,
-    title                TEXT,
-    datasetcreationdate  TEXT,
-    abstract             TEXT,
-    keyword              TEXT,
-    geoBox               TEXT,        
-    constraints          TEXT,
-    SecurityConstraints  TEXT,
-    LegalConstraints     TEXT,
-    temporalExtent       TEXT,
-    image                TEXT,
-    responsibleParty     TEXT,
-    link                 TEXT,
-    metadatacreationdate TEXT,
-    productInformation   TEXT,
-    parentId             TEXT,        
-    title_vector         vector(3072) 
-);
-EOF
-
-echo "Setup SQL executed."
-
-echo "pgvector PostgreSQL container is running."
