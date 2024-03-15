@@ -89,7 +89,7 @@ async function fetchAndLogEmbedding(csvDatasetFilePath, titlesToCombine) {
 
 
 
-async function extractMultipleColumnsModifyHeadersAndCreateNewCSV(filePath, columnNames, outputFilename) {
+async function appendColumnsEmbeddings(filePath, columnNames, outputFilename) {
   // Array for storage of 'original' dataset
   const rows = [];
 
@@ -152,6 +152,6 @@ async function extractMultipleColumnsModifyHeadersAndCreateNewCSV(filePath, colu
 const inputDatasetPath = '../cleaned_metadata.csv'
 const columnsToVectorise = ['title', 'abstract', 'keyword']; //, 'geoBox', 'Constraints', 'SecurityConstraints', 'SecurityConstraints', 'LegalConstraints', 'responsibleParty'];
 const vectorisedColumnsDataset = 'all_columns_vectorized.csv';
-extractMultipleColumnsModifyHeadersAndCreateNewCSV(inputDatasetPath, columnsToVectorise, vectorisedColumnsDataset)
+appendColumnsEmbeddings(inputDatasetPath, columnsToVectorise, vectorisedColumnsDataset)
   .then(() => console.log('Columns extracted, modified, and new CSV file created.'))
   .catch(error => console.error('Error:', error));
