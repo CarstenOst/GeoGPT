@@ -10,9 +10,3 @@ docker run -d --name pgvector_container \
   -p 5432:5432 pgvector/pgvector:pg16
 
 echo "pgvector PostgreSQL container is running."
-
-echo "Waiting for PostgreSQL to start..."
-sleep 10
-
-# Connect to the database and execute setup SQL
-echo "Connecting to the database and executing setup SQL..."
