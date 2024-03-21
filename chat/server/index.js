@@ -1,5 +1,5 @@
 // Import the necessary modules
-//const { sendApiChatRequest } = require("../../helpers/retrieval_augmented_generation");
+const { sendApiChatRequest } = require("../../helpers/retrieval_augmented_generation");
 const { fetchOpenAIEmbeddings } = require("../../helpers/fetch_openai_embeddings_api");
 const pgvector = require('pgvector/pg');
 const { client, connectClient } = require('../../helpers/connection.js');
@@ -13,13 +13,6 @@ pgvector.registerType(client);
 
 const WebSocket = require('ws');
 const server = new WebSocket.Server( {port : '8080'} );
-
-
-
-const openai = new OpenAI({
-  organization: openai_organisation_id,
-  apiKey: openai_gpt_api_key,
-});
 
 
 
@@ -56,29 +49,14 @@ server.on('connection', socket => {
         const headers = headersKeys.join(' | ');
         const vdbResults = vdbResponse.map(row => headersKeys.map(key => row[key]).join(' | ')).join('\n');
 
-        const ragMessage = `Skriv en respons som finner det mest korresponderende datasettet fra metadata for spørringen:\nSpørring:${inputText}\nVektor Database Resultater:\n${headers}\n${vdbResults}`;
+        const ragMessage = `Skriv en respons som finner det mest korresponderende datasettet fra metadata for spørringen. Hjelp meg omformulere spørringen dersom ingen av resultatene besvarer min spørring:\nSpørring:${inputText}\nVektor Database Resultater:\n${headers}\n${vdbResults}`;
         const messages = [
         { role: "user", content: ragMessage }
         ];
 
-        // Establishes a stream from the Openai API
-        const stream = await openai.chat.completions.create({
-            model: openai_gpt_api_model,
-            messages: messages,
-            stream: true,
-        });
-
-        // Receives the response in a stream as it is generated, also stores full Response
-        let fullRagResponse = '';
-        for await (const chunk of stream) {
-            const content = chunk.choices[0]?.delta?.content || "";
-            const response = {
-                action: 'chatStream',
-                payload: content,
-            };
-            socket.send(JSON.stringify(response));
-            fullRagResponse += content;
-        }
+        // Establishes a socket stream from the Openai API that also returns full response
+        const fullRagResponse = await sendApiChatRequest(messages, socket);
+        
 
         // After the stream is complete, the vector database response is sent
         const vdbMessage = {
