@@ -38,10 +38,10 @@ server.on('connection', socket => {
 
     socket.on('message', async message => {
         // Extract the input text from the request body
-        const inputText = JSON.parse(message).payload;
+        const questionText = JSON.parse(message).payload;
 
         // Get the vectorized input from OpenAI
-        const jsonInputFromOpenAi = await fetchOpenAIEmbeddings(inputText);
+        const jsonInputFromOpenAi = await fetchOpenAIEmbeddings(questionText);
         const vectorizedInputFromUser = jsonInputFromOpenAi.data[0].embedding;
         const vdbResponse = await vectorSearch(vectorizedInputFromUser);
 
@@ -49,10 +49,17 @@ server.on('connection', socket => {
         const headers = headersKeys.join(' | ');
         const vdbResults = vdbResponse.map(row => headersKeys.map(key => row[key]).join(' | ')).join('\n');
 
-        const ragMessage = `Skriv en respons som finner det mest korresponderende datasettet fra metadata for spørringen. Hjelp meg omformulere spørringen dersom ingen av resultatene besvarer min spørring:\nSpørring:${inputText}\nVektor Database Resultater:\n${headers}\n${vdbResults}`;
+        const ragMessage = `Skriv en respons som finner det mest korresponderende datasettet fra metadata for spørringen. Hjelp meg omformulere spørringen dersom ingen av resultatene besvarer min spørring:\nSpørring:${questionText}\nVektor Database Resultater:\n${headers}\n${vdbResults}`;
         const messages = [
         { role: "user", content: ragMessage }
         ];
+
+        // First sends the user message
+        const userMessage = {
+            action: 'userMessage',
+            payload: questionText,
+        }
+        socket.send(JSON.stringify(userMessage));
 
         // Establishes a socket stream from the Openai API that also returns full response
         const fullRagResponse = await sendApiChatRequest(messages, socket);

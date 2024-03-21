@@ -15,6 +15,14 @@ async function sendApiChatRequest(messages, webSocket) {
         stream: true,
     });
 
+    // Sends initial message that the stream is starting
+    const streamMessageStart = {
+        action: 'chatStream',
+        payload: '',
+        isNewMessage: true,
+    };
+    webSocket.send(JSON.stringify(streamMessageStart));
+
     // Receives the response in a stream as it is generated, also stores full Response
     let fullRagResponse = '';
     for await (const chunk of stream) {
