@@ -20,11 +20,11 @@ async function sendApiChatRequest(messages, webSocket) {
     for await (const chunk of stream) {
         // TODO add stop signal that stops the stream
         const content = chunk.choices[0]?.delta?.content || "";
-        const response = {
+        const streamMessage = {
             action: 'chatStream',
             payload: content,
         };
-        webSocket.send(JSON.stringify(response));
+        webSocket.send(JSON.stringify(streamMessage));
         fullRagResponse += content;
     }
 
