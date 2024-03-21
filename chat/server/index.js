@@ -61,6 +61,15 @@ server.on('connection', socket => {
         }
         socket.send(JSON.stringify(userMessage));
 
+        // TODO remove this debugging message (shows context given to ChatGPT API)
+        const ragContext = {
+            action: 'userMessage',
+            payload: ragMessage,
+        }
+        socket.send(JSON.stringify(ragContext));
+        // TODO remove this debugging message (shows context given to ChatGPT API)
+
+
         // Establishes a socket stream from the Openai API that also returns full response
         const fullRagResponse = await sendApiChatRequest(messages, socket);
         
