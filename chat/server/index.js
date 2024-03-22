@@ -36,7 +36,11 @@ async function vectorSearch(vectorArray){
 // Establishes a socket connection with the client that can handle messages
 server.on('connection', socket => {
 
+    // Keeps track of previous messages sent, using the N last correspondence (user and system message) 
+    socket.messages = [];
     socket.on('message', async message => {
+        let memory = socket.messages.slice(-6);
+
         // Extract the input text from the request body
         const questionText = JSON.parse(message).payload;
 
@@ -50,7 +54,10 @@ server.on('connection', socket => {
         const vdbResults = vdbResponse.map(row => headersKeys.map(key => row[key]).join(' | ')).join('\n');
 
         const ragMessage = `Skriv en respons som finner det mest korresponderende datasettet fra metadata for spørringen. Hjelp meg omformulere spørringen dersom ingen av resultatene besvarer min spørring:\nSpørring:${questionText}\nVektor Database Resultater:\n${headers}\n${vdbResults}`;
+
+        // Loads conversation memory, with new request
         const messages = [
+            ...memory,
         { role: "user", content: ragMessage }
         ];
 
@@ -60,6 +67,7 @@ server.on('connection', socket => {
             payload: questionText,
         }
         socket.send(JSON.stringify(userMessage));
+
 
         // TODO remove this debugging message (shows context given to ChatGPT API)
         const ragContext = {
@@ -72,6 +80,12 @@ server.on('connection', socket => {
 
         // Establishes a socket stream from the Openai API that also returns full response
         const fullRagResponse = await sendApiChatRequest(messages, socket);
+
+        // Add user's question with context and ragResponse to the messages history
+        socket.messages.push(
+            { role: "user", content: ragMessage },
+            { role: "system", content: fullRagResponse },
+        );
         
 
         // After the stream is complete, the vector database response is sent
