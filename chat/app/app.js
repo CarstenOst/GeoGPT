@@ -82,6 +82,10 @@ socket.onmessage = async function(event) {
 
                 results_div.appendChild(result_div); // Append the result div to the results container
             });
+
+            // Reactivates the submit button
+            document.getElementById('submitButton').disabled = false;
+            document.getElementById('submitButton').className = 'message-button';
             break;
 
         default:
@@ -97,11 +101,16 @@ socket.onerror = (error) => {
 
 // Listen for form submit instead of button click
 document.getElementById('searchform').addEventListener('submit', function(event) {
-    event.preventDefault(); // Prevent the default form submission
-    //const message = document.getElementById('searchinput').value;
+    // Prevent the default form submission and resubmission
+    event.preventDefault(); 
+    document.getElementById('submitButton').disabled = true;
+    document.getElementById('submitButton').className = 'disabled-button';
     const message = {
         action : 'formSubmit',
-        payload : document.getElementById('searchinput').value,
+        payload : document.getElementById('searchInput').value,
     }
-    socket.send(JSON.stringify(message)); // Send the message from the input field
+    
+    // Send the message from the input field, and clears it
+    socket.send(JSON.stringify(message)); 
+    document.getElementById('searchInput').value = '';
 });

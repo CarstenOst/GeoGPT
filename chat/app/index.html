@@ -3,123 +3,22 @@
 
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Search Page</title>
-    <style>
-        body {
-            margin: 0;
-            padding: 0;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            flex-direction: column;
-            height: 100vh;
-            /* Topology background image */
-            background-image: url("./colourful_topology_background.png");
-            background-size: cover;
-            background-repeat: no-repeat;
-        }
+    <link rel="stylesheet" href="style.css">
 
-        .search-container {
-            display: flex;
-            align-items: center;
-            width: 60%;
-            border: 3px solid rgb(0, 89, 254);
-            border-radius: 20px;
-            margin-bottom: 20px;
-        }
+    <title>GeoGPT</title>
 
-        .search-input {
-            flex: 1;
-            border: none;
-            padding: 10px;
-            border-top-left-radius: 20px;
-            border-bottom-left-radius: 20px;
-            outline: none;
-        }
-
-        .search-button {
-            background-color: rgb(0, 89, 254);
-            border: none;
-            color: white;
-            padding: 10px 20px;
-            border-top-right-radius: 20px;
-            border-bottom-right-radius: 20px;
-            cursor: pointer;
-        }
-
-        #results {
-            flex: flex;
-            flex-wrap: wrap;
-            width: 60%;
-            overflow-y: auto;
-            background-color: white;
-            border-radius: 20px;
-            margin: 20px;
-            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
-            margin-bottom: auto;
-            /* Pushes the results to the top */
-        }
-
-        .user-message {
-            color: white;
-            text-align: right;
-            background-color: #0077ff;
-            border-radius: 10px;
-            padding: 10px;
-            margin: 10px;
-            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
-        }
-
-        .system-message {
-            color: white;
-            text-align: left;
-            background-color: rgb(33, 50, 50);
-            border-radius: 10px;
-            padding: 10px;
-            margin: 10px;
-            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
-        }
-
-        .result-item {
-            background-color: #f9f9f9;
-            border-radius: 10px;
-            padding: 10px;
-            margin: 10px;
-            text-align: center;
-            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
-        }
-
-        .result-item a {
-            color: #007bff;
-            text-decoration: none;
-        }
-
-        .result-item a:hover {
-            text-decoration: underline;
-        }
-
-        /* Resets paddings for horizontal alignment */
-        .result-item h3,
-        .result-item p,
-        .result-item a {
-            margin: 0;
-            padding: 0;
-        }
-    </style>
-    <meta charset="UTF-8">
     <script defer src="app.js"> </script>
 </head>
 
     <body>
 
         <div id="results">
-        <!-- results will be displayed here -->
+            <!-- results will be displayed here -->
         </div>
 
         <form id="searchform" class="search-container">
-            <input type="text" id="searchinput" class="search-input" placeholder="Ask geogpt...">
-            <button type="submit" class="search-button">send</button>
+            <input type="text" id="searchInput" class="search-input" placeholder="Ask geogpt...">
+            <button type="submit" id="submitButton" class="message-button">send</button>
         </form>
     </body>
 </html>
