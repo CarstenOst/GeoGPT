@@ -50,29 +50,34 @@ body {
 }
 
 #results {
-    flex: flex;
-    flex-wrap: wrap;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
     width: 60%;
     overflow-y: auto;
     background-color: white;
     border-radius: 20px;
     margin: 20px;
     box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
-    margin-bottom: auto;
-    /* Pushes the results to the top */
+    margin-bottom: auto; /* Pushes the results to the top */
 }
 
 .user-message {
+    display: block; 
+    max-width: fit-content;
     color: white;
     text-align: right;
     background-color: #0077ff;
     border-radius: 10px;
     padding: 10px;
     margin: 10px;
+    margin-left: auto; 
     box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
 }
 
 .system-message {
+    display: block; 
+    max-width: fit-content;
     color: white;
     text-align: left;
     background-color: rgb(33, 50, 50);
