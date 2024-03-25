@@ -21,11 +21,11 @@ socket.onmessage = async function(event) {
                 // Creates new div for the incoming user message
                 currentUserMessageDiv = document.createElement('div');
 
-                // Adds id, class, and appends it to 'results' div
+                // Adds id, class, and appends it to 'chatMessages' div
                 currentUserMessageDiv.id = `message-${chatMessageId}`;
                 currentUserMessageDiv.classList.add('user-message');
                 currentUserMessageDiv.innerHTML += message.payload;
-                document.getElementById('results').appendChild(currentUserMessageDiv);
+                document.getElementById('chatMessages').appendChild(currentUserMessageDiv);
 
                 // Incremets message id right after response received
                 chatMessageId += 1;
@@ -37,10 +37,10 @@ socket.onmessage = async function(event) {
                 // Create a new div element for the incoming system message (also updates reference to the div the stream should be sendt to)
                 currentSystemMessageDiv = document.createElement('div');
 
-                // Adds id, class, and appends it to 'results' div
+                // Adds id, class, and appends it to 'chatMessages' div
                 currentSystemMessageDiv.id = `message-${chatMessageId}`;
                 currentSystemMessageDiv.classList.add('system-message');
-                document.getElementById('results').appendChild(currentSystemMessageDiv);
+                document.getElementById('chatMessages').appendChild(currentSystemMessageDiv);
 
                 // Incremets message id right after response received
                 chatMessageId += 1;
@@ -113,4 +113,11 @@ document.getElementById('searchform').addEventListener('submit', function(event)
     // Send the message from the input field, and clears it
     socket.send(JSON.stringify(message)); 
     document.getElementById('searchInput').value = '';
+});
+
+
+$(document).ready(function() {
+    $("#resizeDiv").draggable({
+        containment: "window"
+    }).resizable();
 });
