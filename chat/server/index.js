@@ -4,8 +4,6 @@ const { fetchOpenAIEmbeddings } = require("../../helpers/fetch_openai_embeddings
 const pgvector = require('pgvector/pg');
 const { client, connectClient } = require('../../helpers/connection.js');
 
-const OpenAI = require("openai");
-const { api: {openai_gpt_api_key, openai_organisation_id, openai_gpt_api_model} } = require("../../config.js");
 
 // Connect and register the client type
 connectClient();
@@ -21,7 +19,7 @@ async function vectorSearch(vectorArray){
     // Perform the search with the vectorized input
     const searchVector = [pgvector.toSql(vectorArray)];
     const { rows } = await client.query(
-      `SELECT uuid, title, title_vector <-> $1 AS distance 
+      `SELECT title, abstract, title_vector <-> $1 AS distance 
          FROM text_embedding_3_large 
          ORDER BY title_vector <-> $1 LIMIT 6`,
       searchVector
@@ -65,7 +63,7 @@ server.on('connection', socket => {
         const userMessage = {
             action: 'userMessage',
             payload: questionText,
-        }
+        };
         socket.send(JSON.stringify(userMessage));
 
 
@@ -73,13 +71,19 @@ server.on('connection', socket => {
         const ragContext = {
             action: 'userMessage',
             payload: ragMessage,
-        }
+        };
         socket.send(JSON.stringify(ragContext));
         // TODO remove this debugging message (shows context given to ChatGPT API)
 
 
         // Establishes a socket stream from the Openai API that also returns full response
         const fullRagResponse = await sendApiChatRequest(messages, socket);
+
+        // Sends message indicating the stream is complete
+        const streamComplete = {
+            action: 'streamComplete',
+        };
+        socket.send(JSON.stringify(streamComplete));
 
         // Add user's question with context and ragResponse to the messages history
         socket.messages.push(
