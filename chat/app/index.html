@@ -24,7 +24,7 @@
 
 
         </div>
-            <div id="resizeDiv" class="dragable-box">
+            <div id="resizeChatDiv" class="dragable-chat">
                 <div id="chatMessages">
                     <!-- Example messages for testing -->
                     <div class="system-message">Hei! Jeg er GeoGPT, og skal hjelpe deg finne datasettene du leter etter på Geonorge.</div>
@@ -41,14 +41,38 @@
                     <!-- Messages will be displayed here -->
                 </div>
                     
-                <form id="searchform" class="search-container">
-                    <input type="text" id="searchInput" class="search-input" placeholder="Spør GeoGPT...">
-                    <button type="submit" id="submitButton" class="message-button">
+                <form id="chatForm" class="chat-container">
+                    <input type="text" id="chatInput" class="chat-input" placeholder="Spør GeoGPT...">
+                    <button type="submit" id="chatSubmitButton" class="message-button">
                         Send
                         <i class="fa-solid fa-paper-plane"></i>
                     </button>
                 </form>
             </div>
+            
+            
+            <div id="resizeSearchDiv" class="dragable-search">
+                <h2>Kartkatalogen</h2>
+
+                <form id="searchForm" class="search-container">
+                    <input type="text" id="searchInput" class="search-input" placeholder="Søk etter datasett...">
+                    <button type="submit" id="searchSubmitButton" class="search-button">
+                        Søk 
+                        <i class="fa-solid fa-magnifying-glass"></i>
+                    </button>
+                </form>
+
+                <div id="results">
+                    <!-- Example results for testing -->
+                    <div class="result-item">resultat 1</div>
+                    <div class="result-item">resultat 2</div>
+                    <div class="result-item">resultat 3</div>
+                    <!-- Example results for testing -->
+
+                    <!-- results will be displayed here -->
+                </div>
+            </div>
+
 
     </body>
 </html>

@@ -30,74 +30,98 @@ async function vectorSearch(vectorArray){
 
 
 
+// RAG instructions
+const ragInstruction = {
+    role: "user", content: `Skriv en respons som finner det mest korresponderende datasettet fra metadata for spørringen. Hjelp meg omformulere spørringen dersom ingen av resultatene besvarer min spørring:`,
+};
 
 // Establishes a socket connection with the client that can handle messages
 server.on('connection', socket => {
-
+    
     // Keeps track of previous messages sent, using the N last correspondence (user and system message) 
     socket.messages = [];
     socket.on('message', async message => {
-        let memory = socket.messages.slice(-6);
 
-        // Extract the input text from the request body
-        const questionText = JSON.parse(message).payload;
+        const data = JSON.parse(message);
+        switch (data.action) {
+            case "chatFormSubmit":
+                let memory = socket.messages.slice(-6);
 
-        // Get the vectorized input from OpenAI
-        const jsonInputFromOpenAi = await fetchOpenAIEmbeddings(questionText);
-        const vectorizedInputFromUser = jsonInputFromOpenAi.data[0].embedding;
-        const vdbResponse = await vectorSearch(vectorizedInputFromUser);
+                // Extract the input text from the request body
+                const questionText = data.payload;
 
-        const headersKeys = Object.keys(vdbResponse[0]).filter((key) => !key.includes('_vector'));
-        const headers = headersKeys.join(' | ');
-        const vdbResults = vdbResponse.map(row => headersKeys.map(key => row[key]).join(' | ')).join('\n');
+                // Get the vectorized input from OpenAI
+                const jsonInputFromOpenAi = await fetchOpenAIEmbeddings(questionText);
+                const vectorizedInputFromUser = jsonInputFromOpenAi.data[0].embedding;
+                const vdbResponse = await vectorSearch(vectorizedInputFromUser);
 
-        const ragMessage = `Skriv en respons som finner det mest korresponderende datasettet fra metadata for spørringen. Hjelp meg omformulere spørringen dersom ingen av resultatene besvarer min spørring:\nSpørring:${questionText}\nVektor Database Resultater:\n${headers}\n${vdbResults}`;
+                const headersKeys = Object.keys(vdbResponse[0]).filter((key) => !key.includes('_vector'));
+                const headers = headersKeys.join(' | ');
+                const vdbResults = vdbResponse.map(row => headersKeys.map(key => row[key]).join(' | ')).join('\n');
 
-        // Loads conversation memory, with new request
-        const messages = [
-            ...memory,
-        { role: "user", content: ragMessage }
-        ];
+                const ragMessage = `Spørring:${questionText}\nVektor Database Resultater:\n${headers}\n${vdbResults}`;
 
-        // First sends the user message
-        const userMessage = {
-            action: 'userMessage',
-            payload: questionText,
-        };
-        socket.send(JSON.stringify(userMessage));
+                // Loads instruction, conversation memory, and with new request
+                const messages = [
+                    ragInstruction,
+                    ...memory,
+                { role: "user", content: ragMessage },
+                ];
 
-
-        // TODO remove this debugging message (shows context given to ChatGPT API)
-        const ragContext = {
-            action: 'userMessage',
-            payload: ragMessage,
-        };
-        socket.send(JSON.stringify(ragContext));
-        // TODO remove this debugging message (shows context given to ChatGPT API)
+                // First sends the user message
+                const userMessage = {
+                    action: 'userMessage',
+                    payload: questionText,
+                };
+                socket.send(JSON.stringify(userMessage));
 
 
-        // Establishes a socket stream from the Openai API that also returns full response
-        const fullRagResponse = await sendApiChatRequest(messages, socket);
+                // TODO remove this debugging message (shows context given to ChatGPT API)
+                const ragContext = {
+                    action: 'userMessage',
+                    payload: ragMessage,
+                };
+                socket.send(JSON.stringify(ragContext));
+                // TODO remove this debugging message (shows context given to ChatGPT API)
 
-        // Sends message indicating the stream is complete
-        const streamComplete = {
-            action: 'streamComplete',
-        };
-        socket.send(JSON.stringify(streamComplete));
 
-        // Add user's question with context and ragResponse to the messages history
-        socket.messages.push(
-            { role: "user", content: ragMessage },
-            { role: "system", content: fullRagResponse },
-        );
+                // Establishes a socket stream from the Openai API that also returns full response
+                const fullRagResponse = await sendApiChatRequest(messages, socket);
+
+                // Sends message indicating the stream is complete
+                const streamComplete = {
+                    action: 'streamComplete',
+                };
+                socket.send(JSON.stringify(streamComplete));
+
+                // Add user's question with context and ragResponse to the messages history
+                socket.messages.push(
+                    { role: "user", content: ragMessage },
+                    { role: "system", content: fullRagResponse },
+                );
+                break;
+
+            case "searchFormSubmit":
+                // Extract the input text from the request body
+                const searchText = data.payload;
+
+                // Get the vectorized input from OpenAI
+                const openaiJsonVectorResponse = await fetchOpenAIEmbeddings(searchText);
+                const vdbSearchResponse = await vectorSearch(openaiJsonVectorResponse.data[0].embedding);
+
+                // The vector database results are sent
+                const vdbMessage = {
+                    action : 'searchVdbResults',
+                    payload : vdbSearchResponse,
+                }
+                socket.send(JSON.stringify(vdbMessage));               
+                break;
         
+            default:
 
-        // After the stream is complete, the vector database response is sent
-        const vdbMessage = {
-            action : 'chatVdbResults',
-            payload : vdbResponse,
+                console.log(`${data.action} is an invalid server action.`)
+                break;
         }
-        socket.send(JSON.stringify(vdbMessage));
 
     });
 });
