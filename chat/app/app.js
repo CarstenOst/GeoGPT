@@ -52,6 +52,12 @@ socket.onmessage = async function(event) {
             }
             break;
 
+        case "streamComplete":
+            // Reactivates the submit button
+            document.getElementById('submitButton').disabled = false;
+            document.getElementById('submitButton').className = 'message-button';
+            break;
+
         case "chatVdbResults":
             let results = message.payload;
 
@@ -82,10 +88,6 @@ socket.onmessage = async function(event) {
 
                 results_div.appendChild(result_div); // Append the result div to the results container
             });
-
-            // Reactivates the submit button
-            document.getElementById('submitButton').disabled = false;
-            document.getElementById('submitButton').className = 'message-button';
             break;
 
         default:
