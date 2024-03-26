@@ -14,8 +14,22 @@ const server = new WebSocket.Server( {port : '8080'} );
 
 
 
-
+// Function for the search box
 async function vectorSearch(vectorArray){
+    // Perform the search with the vectorized input
+    const searchVector = [pgvector.toSql(vectorArray)];
+    const { rows } = await client.query(
+      `SELECT uuid, title, title_vector <-> $1 AS distance 
+         FROM text_embedding_3_large 
+         ORDER BY title_vector <-> $1 LIMIT 20`,
+      searchVector
+    );
+  
+    return rows;
+}
+
+// Search function used for RAG
+async function RagVectorSearch(vectorArray){
     // Perform the search with the vectorized input
     const searchVector = [pgvector.toSql(vectorArray)];
     const { rows } = await client.query(
@@ -53,7 +67,7 @@ server.on('connection', socket => {
                 // Get the vectorized input from OpenAI
                 const jsonInputFromOpenAi = await fetchOpenAIEmbeddings(questionText);
                 const vectorizedInputFromUser = jsonInputFromOpenAi.data[0].embedding;
-                const vdbResponse = await vectorSearch(vectorizedInputFromUser);
+                const vdbResponse = await RagVectorSearch(vectorizedInputFromUser);
 
                 const headersKeys = Object.keys(vdbResponse[0]).filter((key) => !key.includes('_vector'));
                 const headers = headersKeys.join(' | ');

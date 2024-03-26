@@ -44,15 +44,18 @@
                 <form id="chatForm" class="chat-container">
                     <input type="text" id="chatInput" class="chat-input" placeholder="Spør GeoGPT...">
                     <button type="submit" id="chatSubmitButton" class="message-button">
-                        Send
                         <i class="fa-solid fa-paper-plane"></i>
                     </button>
                 </form>
+
+                <div class="chat-drag-handle">
+                    <i class="fa-regular fa-grip-lines"></i>
+                </div>
             </div>
             
             
             <div id="resizeSearchDiv" class="dragable-search">
-                <h2>Kartkatalogen</h2>
+                <b class="search-title">Kartkatalogen</b>
 
                 <form id="searchForm" class="search-container">
                     <input type="text" id="searchInput" class="search-input" placeholder="Søk etter datasett...">
@@ -70,6 +73,10 @@
                     <!-- Example results for testing -->
 
                     <!-- results will be displayed here -->
+                </div>
+
+                <div class="search-drag-handle">
+                    <i class="fa-regular fa-grip-lines"></i>
                 </div>
             </div>
 

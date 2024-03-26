@@ -59,11 +59,14 @@ socket.onmessage = async function(event) {
             break;
 
         case "searchVdbResults":
-            let results = message.payload;
-            
             const results_div = document.getElementById('results');
+            let results = message.payload;
+             const view_results = results.map((result) => ({
+                ...result,
+                url: `https://kartkatalog.geonorge.no/metadata/${result.title}/${result.uuid}`,
+            }));
 
-            results.forEach((result) => {
+            view_results.forEach((result) => {
                 const result_div = document.createElement('div');
                 result_div.classList.add('result-item'); // Add class 'result-item' to the div
 
@@ -74,6 +77,12 @@ socket.onmessage = async function(event) {
                 const distance_p = document.createElement('p');
                 distance_p.textContent = `Distance: ${result.distance}`; // Set the distance text
                 result_div.appendChild(distance_p); // Append the distance to the result div
+
+                const metadata_a = document.createElement('a');
+                metadata_a.href = result.url; // Set the URL for the metadata link
+                metadata_a.target = '_blank'; // Open in a new tab
+                metadata_a.textContent = 'View Metadata'; // Set the text for the metadata link
+                result_div.appendChild(metadata_a); // Append the metadata link to the result div
 
                 results_div.appendChild(result_div); // Append the result div to the results container
             });
@@ -109,8 +118,9 @@ document.getElementById('chatForm').addEventListener('submit', function(event) {
 
 // Listen for search form submit
 document.getElementById('searchForm').addEventListener('submit', function(event) {
-    // Prevent the default form submission
+    // Prevent the default form submission and clears previous search results
     event.preventDefault(); 
+    document.getElementById('results').innerHTML = '';
     const message = {
         action : 'searchFormSubmit',
         payload : document.getElementById('searchInput').value,
@@ -125,12 +135,14 @@ document.getElementById('searchForm').addEventListener('submit', function(event)
 // Makes the chat and search containers dragable and resizable
 $(document).ready(function() {
     $("#resizeChatDiv").draggable({
+        handle: ".chat-drag-handle",
         containment: "window"
     }).resizable();
 });
 
 $(document).ready(function() {
     $("#resizeSearchDiv").draggable({
+        handle: ".search-drag-handle",
         containment: "window"
     }).resizable();
 });
