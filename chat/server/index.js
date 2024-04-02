@@ -35,7 +35,7 @@ async function RagVectorSearch(vectorArray){
     const { rows } = await client.query(
       `SELECT title, abstract, title_vector <-> $1 AS distance 
          FROM text_embedding_3_large 
-         ORDER BY title_vector <-> $1 LIMIT 6`,
+         ORDER BY title_vector <-> $1 LIMIT 3`,
       searchVector
     );
   
@@ -44,10 +44,6 @@ async function RagVectorSearch(vectorArray){
 
 
 
-// RAG instructions
-const ragInstruction = {
-    role: "user", content: `Skriv en respons som finner det mest korresponderende datasettet fra metadata for spørringen. Hjelp meg omformulere spørringen dersom ingen av resultatene besvarer min spørring:`,
-};
 
 // Establishes a socket connection with the client that can handle messages
 server.on('connection', socket => {
@@ -62,30 +58,38 @@ server.on('connection', socket => {
                 let memory = socket.messages.slice(-6);
 
                 // Extract the input text from the request body
-                const questionText = data.payload;
+                const userQuestion = data.payload;
 
                 // Get the vectorized input from OpenAI
-                const jsonInputFromOpenAi = await fetchOpenAIEmbeddings(questionText);
+                const jsonInputFromOpenAi = await fetchOpenAIEmbeddings(userQuestion);
                 const vectorizedInputFromUser = jsonInputFromOpenAi.data[0].embedding;
                 const vdbResponse = await RagVectorSearch(vectorizedInputFromUser);
 
-                const headersKeys = Object.keys(vdbResponse[0]).filter((key) => !key.includes('_vector'));
+                // Filters away columns if it has any array element as substring
+                const columnsToFilter = ['_vector', 'distance'];
+                const headersKeys = Object.keys(vdbResponse[0]).filter((key) => {
+                    return !columnsToFilter.some(filterString => key.includes(filterString));
+                  });
                 const headers = headersKeys.join(' | ');
-                const vdbResults = vdbResponse.map(row => headersKeys.map(key => row[key]).join(' | ')).join('\n');
+                const vdbResults = vdbResponse.map(row => headersKeys.map(key => row[key]).join(' | ')).join('\n\n');
 
-                const ragMessage = `Spørring:${questionText}\nVektor Database Resultater:\n${headers}\n${vdbResults}`;
 
+                // RAG instructions
+                const ragInstruction = {
+                    role: "system", content: `Du er GeoGPT, en hjelpsom chatbot som skal hjelpe brukere finne datasett, og svare på Geomatikk spørsmål. Svar kort og konsist. Svar brukeren sitt spørsmål basert på konteksten:\n\n${headers}\n\n${vdbResults}`,
+                };
+                
                 // Loads instruction, conversation memory, and with new request
                 const messages = [
-                    ragInstruction,
                     ...memory,
-                { role: "user", content: ragMessage },
+                    ragInstruction,
+                { role: "user", content: userQuestion },
                 ];
 
                 // First sends the user message
                 const userMessage = {
                     action: 'userMessage',
-                    payload: questionText,
+                    payload: userQuestion,
                 };
                 socket.send(JSON.stringify(userMessage));
 
@@ -93,9 +97,11 @@ server.on('connection', socket => {
                 // TODO remove this debugging message (shows context given to ChatGPT API)
                 const ragContext = {
                     action: 'userMessage',
-                    payload: ragMessage,
+                    payload: ragInstruction,
                 };
                 socket.send(JSON.stringify(ragContext));
+                console.log(ragContext);
+                console.log(memory);
                 // TODO remove this debugging message (shows context given to ChatGPT API)
 
 
@@ -110,7 +116,7 @@ server.on('connection', socket => {
 
                 // Add user's question with context and ragResponse to the messages history
                 socket.messages.push(
-                    { role: "user", content: ragMessage },
+                    { role: "user", content: userQuestion },
                     { role: "system", content: fullRagResponse },
                 );
                 break;
