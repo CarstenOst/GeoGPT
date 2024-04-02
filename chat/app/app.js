@@ -54,8 +54,8 @@ socket.onmessage = async function(event) {
 
         case "streamComplete":
             // Reactivates the submit button
-            document.getElementById('submitButton').disabled = false;
-            document.getElementById('submitButton').className = 'message-button';
+            document.getElementById('chatSubmitButton').disabled = false;
+            document.getElementById('chatSubmitButton').className = 'message-button';
             break;
 
         case "searchVdbResults":
