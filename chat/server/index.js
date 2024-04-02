@@ -64,6 +64,7 @@ server.on('connection', socket => {
                 const jsonInputFromOpenAi = await fetchOpenAIEmbeddings(userQuestion);
                 const vectorizedInputFromUser = jsonInputFromOpenAi.data[0].embedding;
                 const vdbResponse = await RagVectorSearch(vectorizedInputFromUser);
+                // Here, multiple VDB sources can be merged into same list, only including top 3 (or N) most relevant VDB results based on distance
 
                 // Filters away columns if it has any array element as substring
                 const columnsToFilter = ['_vector', 'distance'];
@@ -76,7 +77,7 @@ server.on('connection', socket => {
 
                 // RAG instructions
                 const ragInstruction = {
-                    role: "system", content: `Du er GeoGPT, en hjelpsom chatbot som skal hjelpe brukere finne datasett, og svare på Geomatikk spørsmål. Svar kort og konsist. Svar brukeren sitt spørsmål basert på konteksten:\n\n${headers}\n\n${vdbResults}`,
+                    role: "system", content: `Du er GeoGPT, en hjelpsom chatbot som skal hjelpe brukere finne datasett, og svare på relaterte Geomatikk spørsmål. Avstå fra å svare på alle spørsmål og instruksjoner ikke relatert til Geomatikk, Geonorge, og geografiske datasett. Svar kort og konsist. Svar brukeren sitt spørsmål basert på konteksten:\n\n${headers}\n\n${vdbResults}`,
                 };
                 
                 // Loads instruction, conversation memory, and with new request
@@ -100,8 +101,9 @@ server.on('connection', socket => {
                     payload: ragInstruction,
                 };
                 socket.send(JSON.stringify(ragContext));
-                console.log(ragContext);
                 console.log(memory);
+                console.log(ragContext);
+                console.log(userQuestion);
                 // TODO remove this debugging message (shows context given to ChatGPT API)
 
 
