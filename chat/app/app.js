@@ -61,7 +61,7 @@ socket.onmessage = async function(event) {
             document.getElementById('chatSubmitButton').className = 'message-button';
 
             // Formats new message markdown contents into html
-            completeMarkdownConversion(currentSystemMessageDiv.id);
+            customMarkdownConversion(currentSystemMessageDiv.id);
             break;
 
         case "searchVdbResults":
@@ -140,13 +140,59 @@ document.getElementById('searchForm').addEventListener('submit', function(event)
 
 // Markdown formatting function
 // Formats the message markdown into html after stream is complete
-function completeMarkdownConversion(elementId) {
+function customMarkdownConversion(elementId) {
     var element = document.getElementById(elementId);
+    if (element) {
+        let htmlContent = element.innerHTML;
 
-    // Converts the message markdown into html format using showdown
-    var converter = new showdown.Converter();
-    var htmlContent = converter.makeHtml(element.innerHTML);
-    element.innerHTML = htmlContent;
+        // Headers
+        //htmlContent = htmlContent.replace(/^# (.*$)/gim, '<h1>$1</h1>');
+        //htmlContent = htmlContent.replace(/^## (.*$)/gim, '<h2>$1</h2>');
+        //htmlContent = htmlContent.replace(/^### (.*$)/gim, '<h3>$1</h3>');
+        //htmlContent = htmlContent.replace(/^#### (.*$)/gim, '<h4>$1</h4>');
+        //htmlContent = htmlContent.replace(/^##### (.*$)/gim, '<h5>$1</h5>');
+        //htmlContent = htmlContent.replace(/^###### (.*$)/gim, '<h6>$1</h6>');
+
+        // Bold and Italic
+        htmlContent = htmlContent.replace(/\*\*\*(.*?)\*\*\*/g, '<strong><em>$1</em></strong>');
+        htmlContent = htmlContent.replace(/__(.*?)__/g, '<strong><em>$1</em></strong>');
+
+        // Bold
+        htmlContent = htmlContent.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+        htmlContent = htmlContent.replace(/__(.*?)__/g, '<strong>$1</strong>');
+
+        // Italic
+        htmlContent = htmlContent.replace(/\*(.*?)\*/g, '<em>$1</em>');
+        htmlContent = htmlContent.replace(/_(.*?)_/g, '<em>$1</em>');
+
+        // Strikethrough
+        htmlContent = htmlContent.replace(/~~(.*?)~~/g, '<del>$1</del>');
+
+        // Blockquotes
+        htmlContent = htmlContent.replace(/^> (.*$)/gim, '<blockquote>$1</blockquote>');
+
+        // Inline Code
+        htmlContent = htmlContent.replace(/`(.*?)`/g, '<code>$1</code>');
+
+        // Links
+        htmlContent = htmlContent.replace(/\[([^\]]+)]\(([^)]+)\)/g, '<a href="$2">$1</a>');
+
+        // Images
+        htmlContent = htmlContent.replace(/\!\[([^\]]+)]\(([^)]+)\)/g, '<img src="$2" alt="$1" />');
+
+        // Horizontal Rules
+        htmlContent = htmlContent.replace(/^(-{3,}|\*{3,}|_{3,})$/gim, '<hr />');
+
+        // Unordered Lists (simple conversion, not handling nested lists)
+        htmlContent = htmlContent.replace(/^\+ (.*$)/gim, '<ul>\n<li>$1</li>\n</ul>');
+        htmlContent = htmlContent.replace(/^\* (.*$)/gim, '<ul>\n<li>$1</li>\n</ul>');
+        htmlContent = htmlContent.replace(/^- (.*$)/gim, '<ul>\n<li>$1</li>\n</ul>');
+
+        // Ordered Lists (simple conversion, not handling nested lists)
+        htmlContent = htmlContent.replace(/^\d+\. (.*$)/gim, '<ol>\n<li>$1</li>\n</ol>');
+
+        element.innerHTML = htmlContent;
+    }
 }
 
 
