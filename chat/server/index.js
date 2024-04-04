@@ -100,7 +100,7 @@ server.on('connection', socket => {
                     action: 'userMessage',
                     payload: ragInstruction,
                 };
-                socket.send(JSON.stringify(ragContext));
+                //socket.send(JSON.stringify(ragContext));
                 console.log(memory);
                 console.log(ragContext);
                 console.log(userQuestion);

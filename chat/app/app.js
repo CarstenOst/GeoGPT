@@ -50,12 +50,18 @@ socket.onmessage = async function(event) {
             if (currentSystemMessageDiv) {
                 currentSystemMessageDiv.innerHTML += message.payload;
             }
+
+            // Formats new message payload from markdown into html
+            //customMarkdownConversion(currentSystemMessageDiv.id);
             break;
 
         case "streamComplete":
             // Reactivates the submit button
             document.getElementById('chatSubmitButton').disabled = false;
             document.getElementById('chatSubmitButton').className = 'message-button';
+
+            // Formats new message markdown contents into html
+            completeMarkdownConversion(currentSystemMessageDiv.id);
             break;
 
         case "searchVdbResults":
@@ -132,6 +138,19 @@ document.getElementById('searchForm').addEventListener('submit', function(event)
 
 
 
+// Markdown formatting function
+// Formats the message markdown into html after stream is complete
+function completeMarkdownConversion(elementId) {
+    var element = document.getElementById(elementId);
+
+    // Converts the message markdown into html format using showdown
+    var converter = new showdown.Converter();
+    var htmlContent = converter.makeHtml(element.innerHTML);
+    element.innerHTML = htmlContent;
+}
+
+
+
 // Makes the chat and search containers dragable and resizable
 $(document).ready(function() {
     $("#resizeChatDiv").draggable({
@@ -146,3 +165,30 @@ $(document).ready(function() {
         containment: "window"
     }).resizable();
 });
+
+
+
+
+
+// Function for dynamically displaying filters on search
+function filterFunction() {
+    var input, filter, div, a, i;
+    input = document.getElementById("searchFilter");
+    filter = input.value.toUpperCase();
+    div = document.getElementById("filterDropdown");
+    a = div.getElementsByTagName("a");
+    let isInputEmpty = input.value.trim() === '';
+  
+    // If there's no input, hide all links. Otherwise, follow the existing show/hide logic.
+    for (i = 0; i < a.length; i++) {
+      if (isInputEmpty) {
+        a[i].style.display = "none";
+      } else {
+        let txtValue = a[i].textContent || a[i].innerText;
+        a[i].style.display = txtValue.toUpperCase().indexOf(filter) > -1 ? "" : "none";
+      }
+    }
+  
+    // Show the dropdown content when there's input, hide it when there's none.
+    div.style.display = isInputEmpty ? "none" : "block";
+  }
