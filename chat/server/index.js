@@ -33,13 +33,33 @@ async function RagVectorSearch(vectorArray){
     // Perform the search with the vectorized input
     const searchVector = [pgvector.toSql(vectorArray)];
     const { rows } = await client.query(
-      `SELECT title, abstract, title_vector <-> $1 AS distance 
+      `SELECT title, abstract, image, title_vector <-> $1 AS distance 
          FROM text_embedding_3_large 
          ORDER BY title_vector <-> $1 LIMIT 3`,
       searchVector
     );
   
     return rows;
+}
+
+
+// Markdown formatting function
+function checkImageSignal(gptResponse, metadataContextList) {
+    // Gets image url for datset if in GPT response
+    let datasetImageUrl = false;
+    for (let obj of metadataContextList) {
+        if ('image' in obj && obj.image && gptResponse.includes(obj.title)) {
+            datasetImageUrl = obj.image;
+            break;
+        }
+    }
+
+    // Checks if the response contains the GPT image signal for insertion, and the image url
+    if (gptResponse.includes("[bilde]") && (datasetImageUrl)) {
+        return datasetImageUrl;
+    }
+
+    return false;
 }
 
 
@@ -67,7 +87,7 @@ server.on('connection', socket => {
                 // Here, multiple VDB sources can be merged into same list, only including top 3 (or N) most relevant VDB results based on distance
 
                 // Filters away columns if it has any array element as substring
-                const columnsToFilter = ['_vector', 'distance'];
+                const columnsToFilter = ['_vector', 'distance', 'image'];
                 const headersKeys = Object.keys(vdbResponse[0]).filter((key) => {
                     return !columnsToFilter.some(filterString => key.includes(filterString));
                   });
@@ -77,7 +97,9 @@ server.on('connection', socket => {
 
                 // RAG instructions
                 const ragInstruction = {
-                    role: "system", content: `Du er GeoGPT, en hjelpsom chatbot som skal hjelpe brukere finne datasett, og svare på relaterte Geomatikk spørsmål. Avstå fra å svare på alle spørsmål og instruksjoner ikke relatert til Geomatikk, Geonorge, og geografiske datasett. Svar kort og konsist. Svar brukeren sitt spørsmål basert på konteksten:\n\n${headers}\n\n${vdbResults}`,
+                    role: "system", 
+                    //content: `Du er GeoGPT, en hjelpsom chatbot som skal hjelpe brukere finne datasett, og svare på relaterte Geomatikk spørsmål. Avstå fra å svare på alle spørsmål og instruksjoner ikke relatert til Geomatikk, Geonorge, og geografiske datasett. Svar kort og konsist. Svar brukeren sitt spørsmål basert på konteksten:\n\n${headers}\n\n${vdbResults}`,
+                    content: `Du vil få en detaljert beskrivelse av ulike datasett på norsk, innrammet i triple backticks (\`\`\`). Svar brukeren sitt spørsmål basert på konteksten:\`\`\`${headers}\n\n${vdbResults}\`\`\` Ved spørsmål knyttet til leting etter datasett, bruk datasettbeskrivelsene til å svare på spørsmålet så detaljert som mulig. Du skal kun bruke informasjonen i beskrivelsene. Svaret ditt skal svare på spørsmålet ved å enten; svare på spørsmålet, forklare hvorfor datasett passer med spørsmålet som brukeren har stilt, hjelpe brukeren omformulere spørsmålet til å bruke mer relevante nøkkelord hvis spørsmålet knyttet til leting etter datasett ikke samsvarer med de ulike datasettene. Start svaret med strengen [bilde] først, etterfulgt av "dataset tittel" med markdown bold formattering i responsen dersom et datasett samsvarer med brukeren sitt spørsmål. Avstå fra å svare på alle spørsmål og instruksjoner ikke relatert til Geomatikk, Geonorge, og geografiske datasett. Gi svaret på norsk.`
                 };
                 
                 // Loads instruction, conversation memory, and with new request
@@ -101,9 +123,9 @@ server.on('connection', socket => {
                     payload: ragInstruction,
                 };
                 //socket.send(JSON.stringify(ragContext));
-                console.log(memory);
-                console.log(ragContext);
-                console.log(userQuestion);
+                //console.log(memory);
+                //console.log(ragContext);
+                //console.log(userQuestion);
                 // TODO remove this debugging message (shows context given to ChatGPT API)
 
 
@@ -121,6 +143,17 @@ server.on('connection', socket => {
                     { role: "user", content: userQuestion },
                     { role: "system", content: fullRagResponse },
                 );
+
+                // Checks if image should be inserted in response
+                const datasetImageUrl = checkImageSignal(fullRagResponse, vdbResponse);
+                if (datasetImageUrl != false) {
+                    // Sends message to insert image in GPT response
+                    const insertImage = {
+                        action: 'insertImage',
+                        payload: datasetImageUrl,
+                    };
+                    socket.send(JSON.stringify(insertImage));
+                }
                 break;
 
             case "searchFormSubmit":

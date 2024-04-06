@@ -105,9 +105,12 @@ body {
     display: block; 
     width: fit-content;
     max-width: 85%;
-    color: white;
     text-align: left;
+    /*
+    color: white;
     background-color: rgb(33, 50, 50);
+    */
+    border: 1px solid #000000;
     border-radius: 10px;
     padding: 8px;
     margin: 2px;
@@ -192,12 +195,47 @@ body {
 }
 
 .result-item {
-    background-color: #f9f9f9;
-    border-radius: 10px;
-    padding: 10px;
-    margin: 10px;
-    text-align: center;
-    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+    display: flex;
+    margin-top: 10px;
+    border-bottom: 1.5px solid #000000;
+    justify-content: space-between;
+    align-items: end;
+}
+
+.result-buttons {
+    display: flex;
+}
+
+.show-dataset {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    margin-left: 10px;
+}
+
+.show-dataset-icon {
+    font-size: large;
+    color: #09A756;
+}
+
+.show-dataset-text {
+    font-size: x-small;
+}
+
+.download-dataset {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    margin-left: 10px;
+}
+
+.download-dataset-icon {
+    font-size: large;
+    color: #09A756;
+}
+
+.download-dataset-text {
+    font-size: x-small;
 }
 
 .result-item a {
@@ -243,59 +281,87 @@ body {
 
 /* Filter dropdown */
 #searchFilter {
-    /*
-    box-sizing: border-box;
-    background-position: 14px 12px;
-    background-repeat: no-repeat;
-    font-size: 16px;
-    padding: 14px 20px 12px 45px;
-    border: none;
-    border-bottom: 1px solid #ddd;
-    */
-    flex: 1;
-    padding: 10px;
-    outline: none;
-    display: block;
+    margin: 5px;
 }
 
 .filter-container {
-    display: flex;
+    display: inline-block;
     align-items: center;
     border: 1.5px solid rgb(0, 0, 0);
-    /*border-radius: 8px;*/
+    border-radius: 10px;
+    padding: 3px;
 }
 
 .filter-input {
-    padding: 10px;
     border: none;
 }
 
-#searchFilter:focus {
-    outline: 3px solid #858585;
-}
-
 .dropdown {
-    position: relative;
-    display: inline-block;
 }
 
 .dropdown-content {
     display: none;
     position: absolute;
-    background-color: #f6f6f6;
-    min-width: 230px;
-    overflow: auto;
-    border: 1px solid #ddd;
+    background-color: #FFFFFF;
+    min-width: fit-content;
+    overflow-y: auto;
     z-index: 1;
 }
 
 .dropdown-content a {
     color: black;
-    padding: 12px 16px;
     text-decoration: none;
     display: block;
 }
 
 .dropdown a:hover {
-    background-color: #858585;
+    color: #FFFFFF;
+    background-color: #0066B2;
+}
+
+
+
+
+
+/* TESTING OF MARKDOWN TO HTML IMAGE */
+.card-image-container {
+    position: relative;
+    border-bottom: 1px solid #000;
+    border-radius: 10px 10px 0px 0px;
+    height: 100px;
+    overflow-y: hidden; /* can be auto for scroll, but this probably anoys users */
+}
+
+.show-card-button {
+    display: flex;
+    flex-direction: column;
+    position: absolute;
+    align-content: center;
+    text-align: center;
+    font-size: small;
+    top: 5px;
+    right: 60px;
+    color: #FFFFFF;
+    background-color: #0072C7;
+    border: 0.5px solid #000;
+    border-radius: 8px;
+    width: 45px;
+    padding: 2px;
+}
+
+.download-card-button {
+    display: flex;
+    flex-direction: column;
+    position: absolute;
+    align-content: center;
+    text-align: center;
+    font-size: small;
+    top: 5px;
+    right: 5px;
+    color: #FFFFFF;
+    background-color: #0072C7;
+    border: 0.5px solid #000;
+    border-radius: 8px;
+    width: 45px;
+    padding: 2px;
 }

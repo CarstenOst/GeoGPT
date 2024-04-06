@@ -64,6 +64,13 @@ socket.onmessage = async function(event) {
             customMarkdownConversion(currentSystemMessageDiv.id);
             break;
 
+        case "insertImage":
+            // Formats new message markdown contents into html
+            console.log(`Insert image triggered with the url: ${message.payload}`);
+            console.log(`currentSystemMessageDiv id: ${currentSystemMessageDiv.id}`)
+            customMarkdownImageConversion(currentSystemMessageDiv.id, message.payload);
+            break;
+
         case "searchVdbResults":
             const results_div = document.getElementById('results');
             let results = message.payload;
@@ -139,6 +146,19 @@ document.getElementById('searchForm').addEventListener('submit', function(event)
 
 
 // Markdown formatting function
+function customMarkdownImageConversion(elementId, imageUrl) {
+    var element = document.getElementById(elementId);
+    if (!element) return;
+
+    let htmlContent = element.innerHTML;
+
+    // Images
+    let replacementHtml = `<div class="card-image-container"> <img src="${imageUrl}" alt="Bilde" width="100%"/> <div class="show-card-button"><i class="fa-solid fa-map-location-dot card-icon"></i>Vis</div> <div class="download-card-button"><i class="fa-solid fa-cloud-arrow-down card-icon"></i>Last ned</div> </div>`;
+    htmlContent = htmlContent.replace(/\[bilde\]/g, replacementHtml);
+
+    element.innerHTML = htmlContent;
+}
+
 // Formats the message markdown into html after stream is complete
 function customMarkdownConversion(elementId) {
     var element = document.getElementById(elementId);
@@ -153,17 +173,13 @@ function customMarkdownConversion(elementId) {
         //htmlContent = htmlContent.replace(/^##### (.*$)/gim, '<h5>$1</h5>');
         //htmlContent = htmlContent.replace(/^###### (.*$)/gim, '<h6>$1</h6>');
 
-        // Bold and Italic
         htmlContent = htmlContent.replace(/\*\*\*(.*?)\*\*\*/g, '<strong><em>$1</em></strong>');
-        htmlContent = htmlContent.replace(/__(.*?)__/g, '<strong><em>$1</em></strong>');
 
         // Bold
         htmlContent = htmlContent.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
-        htmlContent = htmlContent.replace(/__(.*?)__/g, '<strong>$1</strong>');
 
         // Italic
         htmlContent = htmlContent.replace(/\*(.*?)\*/g, '<em>$1</em>');
-        htmlContent = htmlContent.replace(/_(.*?)_/g, '<em>$1</em>');
 
         // Strikethrough
         htmlContent = htmlContent.replace(/~~(.*?)~~/g, '<del>$1</del>');
@@ -175,10 +191,7 @@ function customMarkdownConversion(elementId) {
         htmlContent = htmlContent.replace(/`(.*?)`/g, '<code>$1</code>');
 
         // Links
-        htmlContent = htmlContent.replace(/\[([^\]]+)]\(([^)]+)\)/g, '<a href="$2">$1</a>');
-
-        // Images
-        htmlContent = htmlContent.replace(/\!\[([^\]]+)]\(([^)]+)\)/g, '<img src="$2" alt="$1" />');
+        //htmlContent = htmlContent.replace(/\[([^\]]+)]\(([^)]+)\)/g, '<a href="$2">$1</a>');
 
         // Horizontal Rules
         htmlContent = htmlContent.replace(/^(-{3,}|\*{3,}|_{3,})$/gim, '<hr />');
@@ -201,14 +214,26 @@ function customMarkdownConversion(elementId) {
 $(document).ready(function() {
     $("#resizeChatDiv").draggable({
         handle: ".chat-drag-handle",
-        containment: "window"
+        containment: "window",
+
+        // Makes the active card be on top
+        start: function() {
+            $(this).css("z-index", 2);
+            $("#resizeSearchDiv").css("z-index", 1);
+        }
     }).resizable();
 });
 
 $(document).ready(function() {
     $("#resizeSearchDiv").draggable({
         handle: ".search-drag-handle",
-        containment: "window"
+        containment: "window",
+
+        // Makes the active card be on top
+        start: function() {
+            $(this).css("z-index", 2);
+            $("#resizeChatDiv").css("z-index", 1);
+        }
     }).resizable();
 });
 

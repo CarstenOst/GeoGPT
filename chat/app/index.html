@@ -25,78 +25,153 @@
         </div>
 
         <div id="map" class="map-image">
-
-
         </div>
-            <div id="resizeChatDiv" class="dragable-chat">
-                <div id="chatMessages">
-                    <!-- Example messages for testing -->
-                    <div class="system-message">Hei! Jeg er GeoGPT, og skal hjelpe deg finne datasettene du leter etter på Geonorge.</div>
-                    <div class="user-message">Hva var årsaken til kvikkleire raset i Gjerdrum kommune i 2020?</div>
-                    <div class="system-message">Tenker... <br>Laster...</div>
-                    <!-- Example messages for testing -->
+        
+        <div id="resizeChatDiv" class="dragable-chat">
+            <div id="chatMessages">
+                <!-- Example messages for testing -->
+                <div class="system-message">Hei! Jeg er GeoGPT, og skal hjelpe deg finne datasettene du leter etter på Geonorge.</div>
+                <div class="user-message">Hva var årsaken til kvikkleire raset i Gjerdrum kommune i 2020?</div>
+                <div class="system-message">Tenker... <br>Laster...</div>
+                <!-- Example messages for testing -->
 
-                    <!-- Messages will be displayed here -->
-                </div>
-                    
-                <form id="chatForm" class="chat-container">
-                    <input type="text" id="chatInput" class="chat-input" placeholder="Spør GeoGPT...">
-                    <button type="submit" id="chatSubmitButton" class="message-button">
-                        <i class="fa-solid fa-paper-plane"></i>
-                    </button>
-                </form>
-
-                <div class="chat-drag-handle">
-                    <i class="fa-regular fa-grip-lines"></i>
-                </div>
+                <!-- Messages will be displayed here -->
             </div>
-            
-            
-            <div id="resizeSearchDiv" class="dragable-search">
-                <b class="search-title">Kartkatalogen</b>
-
-                <form id="searchForm" class="search-container">
-                    <input type="text" id="searchInput" class="search-input" placeholder="Søk etter datasett...">
-                    <button type="submit" id="searchSubmitButton" class="search-button">
-                        Søk 
-                        <i class="fa-solid fa-magnifying-glass"></i>
-                    </button>
-                </form>
-
-                <div class="dropdown">
-                    <div class="filter-container">
-                        <input type="text" id="searchFilter" class="filter-input" placeholder="Filter" onkeyup="filterFunction()"> 
-                        <i class="fa-solid fa-filter"></i>
-                    </div>
                 
-                    <!-- Filter demonstration examples-->
-                    <div id="filterDropdown" class="dropdown-content">
-                    <a href="#about" style="display:none;">About</a>
-                    <a href="#base" style="display:none;">Base</a>
-                    <a href="#blog" style="display:none;">Blog</a>
-                    <a href="#contact" style="display:none;">Contact</a>
-                    <a href="#custom" style="display:none;">Custom</a>
-                    <a href="#support" style="display:none;">Support</a>
-                    <a href="#tools" style="display:none;">Tools</a>
-                    <!-- Filter demonstration examples-->
-                    </div>
+            <form id="chatForm" class="chat-container">
+                <input type="text" id="chatInput" class="chat-input" placeholder="Spør GeoGPT...">
+                <button type="submit" id="chatSubmitButton" class="message-button">
+                    <i class="fa-solid fa-paper-plane"></i>
+                </button>
+            </form>
+
+            <div class="chat-drag-handle">
+                <i class="fa-regular fa-grip-lines"></i>
+            </div>
+        </div>
+        
+        
+        <div id="resizeSearchDiv" class="dragable-search">
+            <b class="search-title">Kartkatalogen</b>
+
+            <form id="searchForm" class="search-container">
+                <input type="text" id="searchInput" class="search-input" placeholder="Søk etter datasett...">
+                <button type="submit" id="searchSubmitButton" class="search-button">
+                    Søk 
+                    <i class="fa-solid fa-magnifying-glass"></i>
+                </button>
+            </form>
+
+            <div class="dropdown">
+                <div class="filter-container">
+                    <input type="text" id="searchFilter" class="filter-input" placeholder="Filter" onkeyup="filterFunction()"> 
+                    <i class="fa-solid fa-filter"></i>
                 </div>
-
-
-                <div id="results">
-                    <!-- Example results for testing -->
-                    <div class="result-item">resultat 1</div>
-                    <div class="result-item">resultat 2</div>
-                    <div class="result-item">resultat 3</div>
-                    <!-- Example results for testing -->
-
-                    <!-- results will be displayed here -->
-                </div>
-
-                <div class="search-drag-handle">
-                    <i class="fa-regular fa-grip-lines"></i>
+            
+                <!-- Filter demonstration examples-->
+                <div id="filterDropdown" class="dropdown-content">
+                <a href="#about" style="display:none;">About</a>
+                <a href="#base" style="display:none;">Base</a>
+                <a href="#blog" style="display:none;">Blog</a>
+                <a href="#contact" style="display:none;">Contact</a>
+                <a href="#custom" style="display:none;">Custom</a>
+                <a href="#support" style="display:none;">Support</a>
+                <a href="#tools" style="display:none;">Tools</a>
+                <!-- Filter demonstration examples-->
                 </div>
             </div>
+
+
+            <div id="results">
+                <!-- Example results for testing -->
+                <div class="result-item">
+                    <a>
+                        Kvikkleire
+                    </a>
+                    <div class="result-buttons">
+                        <div class="show-dataset">
+                            <i class="fa-solid fa-map-location-dot show-dataset-icon"></i>
+                            <span class="show-dataset-text">
+                                Vis
+                            </span>
+                        </div>
+                        <div class="download-dataset">
+                            <i class="fa-solid fa-cloud-arrow-down download-dataset-icon"></i>
+                            <span class="download-dataset-text">
+                                Last ned
+                            </span>
+                        </div>
+                    </div>
+
+                </div>
+                <div class="result-item">
+                    <a>
+                        Løsmasser
+                    </a>
+                    <div class="result-buttons">
+                        <div class="show-dataset">
+                            <i class="fa-solid fa-map-location-dot show-dataset-icon"></i>
+                            <span class="show-dataset-text">
+                                Vis
+                            </span>
+                        </div>
+                        <div class="download-dataset">
+                            <i class="fa-solid fa-cloud-arrow-down download-dataset-icon"></i>
+                            <span class="download-dataset-text">
+                                Last ned
+                            </span>
+                        </div>
+                    </div>
+
+                </div>
+                <div class="result-item">
+                    <a>
+                        Forurenset grunn
+                    </a>
+                    <div class="result-buttons">
+                        <div class="show-dataset">
+                            <i class="fa-solid fa-map-location-dot show-dataset-icon"></i>
+                            <span class="show-dataset-text">
+                                Vis
+                            </span>
+                        </div>
+                        <div class="download-dataset">
+                            <i class="fa-solid fa-cloud-arrow-down download-dataset-icon"></i>
+                            <span class="download-dataset-text">
+                                Last ned
+                            </span>
+                        </div>
+                    </div>
+
+                </div>
+                <div class="result-item">
+                    <a>
+                        Skredhendelser
+                    </a>
+                    <div class="result-buttons">
+                        <div class="show-dataset">
+                            <i class="fa-solid fa-map-location-dot show-dataset-icon"></i>
+                            <span class="show-dataset-text">
+                                Vis
+                            </span>
+                        </div>
+                        <div class="download-dataset">
+                            <i class="fa-solid fa-cloud-arrow-down download-dataset-icon"></i>
+                            <span class="download-dataset-text">
+                                Last ned
+                            </span>
+                        </div>
+                    </div>
+                </div>
+                <!-- Example results for testing -->
+
+                <!-- results will be displayed here -->
+            </div>
+
+            <div class="search-drag-handle">
+                <i class="fa-regular fa-grip-lines"></i>
+            </div>
+        </div>
 
 
     </body>
