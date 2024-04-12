@@ -49,7 +49,8 @@ function checkImageSignal(gptResponse, metadataContextList) {
     let datasetImageUrl = false;
     for (let obj of metadataContextList) {
         if ('image' in obj && obj.image && gptResponse.includes(obj.title)) {
-            datasetImageUrl = obj.image;
+            let imageUrlList = obj.image.split(',');
+            datasetImageUrl = imageUrlList[imageUrlList.length - 1];
             break;
         }
     }
@@ -154,6 +155,12 @@ server.on('connection', socket => {
                     };
                     socket.send(JSON.stringify(insertImage));
                 }
+
+                // Sends signal to format message markdown into html
+                const formatMessage = {
+                    action: 'formatMarkdown',
+                };
+                socket.send(JSON.stringify(formatMessage));
                 break;
 
             case "searchFormSubmit":
