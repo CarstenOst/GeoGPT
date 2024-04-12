@@ -91,11 +91,13 @@ body {
     display: block; 
     width: fit-content;
     max-width: 85%;
-    color: white;
     text-align: left;
+    /*
+    */
+    color: white;
     background-color: #0066B2;
-    border-radius: 10px;
     padding: 8px;
+    border-radius: 10px;
     margin: 2px;
     margin-left: auto; 
     box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
@@ -107,11 +109,14 @@ body {
     max-width: 85%;
     text-align: left;
     /*
+    */
     color: white;
     background-color: rgb(33, 50, 50);
-    */
-    border: 1px solid #000000;
+
     border-radius: 10px;
+    /*
+    Need to find solution to message text padding without image padding
+    */
     padding: 8px;
     margin: 2px;
     box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
@@ -241,20 +246,13 @@ body {
 .result-item a {
     color: #007bff;
     text-decoration: none;
+    max-width: 75%;
 }
 
 .result-item a:hover {
+    cursor: pointer;
     text-decoration: underline;
 }
-
-/* Resets paddings for horizontal alignment */
-.result-item h3,
-.result-item p,
-.result-item a {
-    margin: 0;
-    padding: 0;
-}
-
 
 
 .header-image {
@@ -326,7 +324,7 @@ body {
 /* TESTING OF MARKDOWN TO HTML IMAGE */
 .card-image-container {
     position: relative;
-    border-bottom: 1px solid #000;
+    border: 1px solid #000;
     border-radius: 10px 10px 0px 0px;
     height: 100px;
     overflow-y: hidden; /* can be auto for scroll, but this probably anoys users */
