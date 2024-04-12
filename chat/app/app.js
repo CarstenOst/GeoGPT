@@ -59,16 +59,16 @@ socket.onmessage = async function(event) {
             // Reactivates the submit button
             document.getElementById('chatSubmitButton').disabled = false;
             document.getElementById('chatSubmitButton').className = 'message-button';
-
-            // Formats new message markdown contents into html
-            customMarkdownConversion(currentSystemMessageDiv.id);
             break;
 
         case "insertImage":
             // Formats new message markdown contents into html
-            console.log(`Insert image triggered with the url: ${message.payload}`);
-            console.log(`currentSystemMessageDiv id: ${currentSystemMessageDiv.id}`)
             customMarkdownImageConversion(currentSystemMessageDiv.id, message.payload);
+            break;
+        
+        case "formatMarkdown":
+            // Formats new message markdown contents into html
+            customMarkdownConversion(currentSystemMessageDiv.id);
             break;
 
         case "searchVdbResults":
@@ -80,24 +80,40 @@ socket.onmessage = async function(event) {
             }));
 
             view_results.forEach((result) => {
+                // Creates new result item with child elements
                 const result_div = document.createElement('div');
-                result_div.classList.add('result-item'); // Add class 'result-item' to the div
+                result_div.classList.add('result-item');
 
-                const title_h3 = document.createElement('h3');
-                title_h3.textContent = result.title; // Set the title text
-                result_div.appendChild(title_h3); // Append the title to the result div
 
-                const distance_p = document.createElement('p');
-                distance_p.textContent = `Distance: ${result.distance}`; // Set the distance text
-                result_div.appendChild(distance_p); // Append the distance to the result div
+                // Adds title with dataset link
+                const title_link = document.createElement('a');
+                title_link.textContent = result.title;
+                title_link.href = result.url;
+                title_link.target = '_blank';
+                result_div.appendChild(title_link);
 
-                const metadata_a = document.createElement('a');
-                metadata_a.href = result.url; // Set the URL for the metadata link
-                metadata_a.target = '_blank'; // Open in a new tab
-                metadata_a.textContent = 'View Metadata'; // Set the text for the metadata link
-                result_div.appendChild(metadata_a); // Append the metadata link to the result div
+                // Creates div containing
+                const buttons_container = document.createElement('div');
+                buttons_container.classList.add('result-buttons');
 
-                results_div.appendChild(result_div); // Append the result div to the results container
+                // Creates the 'show dataset' button
+                const show_button = document.createElement('div');
+                show_button.classList.add('show-dataset');
+                show_button.innerHTML = `<i class="fa-solid fa-map-location-dot show-dataset-icon"></i>
+                    <span class="show-dataset-text">Vis</span>`;
+                buttons_container.appendChild(show_button);
+
+                // Creates the 'download dataset' button
+                const download_button = document.createElement('div');
+                download_button.classList.add('download-dataset');
+                download_button.innerHTML = `<i class="fa-solid fa-cloud-arrow-down download-dataset-icon"></i>
+                    <span class="download-dataset-text">Last ned</span>`;
+                buttons_container.appendChild(download_button);
+
+                // Appends the buttons container to the result div
+                result_div.appendChild(buttons_container);
+
+                results_div.appendChild(result_div);
             });
             break;
 
