@@ -63,7 +63,7 @@ socket.onmessage = async function(event) {
 
         case "insertImage":
             // Formats new message markdown contents into html
-            customMarkdownImageConversion(currentSystemMessageDiv.id, message.payload);
+            customMarkdownImageConversion(currentSystemMessageDiv.id, message.payload.datasetImageUrl, message.payload.datasetDownloadUrl);
             break;
         
         case "formatMarkdown":
@@ -162,14 +162,33 @@ document.getElementById('searchForm').addEventListener('submit', function(event)
 
 
 // Markdown formatting function
-function customMarkdownImageConversion(elementId, imageUrl) {
+function customMarkdownImageConversion(elementId, imageUrl, downloadUrl) {
     var element = document.getElementById(elementId);
     if (!element) return;
 
     let htmlContent = element.innerHTML;
 
-    // Images
-    let replacementHtml = `<div class="card-image-container"> <img src="${imageUrl}" alt="Bilde" width="100%"/> <div class="show-card-button"><i class="fa-solid fa-map-location-dot card-icon"></i>Vis</div> <div class="download-card-button"><i class="fa-solid fa-cloud-arrow-down card-icon"></i>Last ned</div> </div>`;
+    // TODO replace the <a> download link to be when the button is clicked on the client side, to submit with uuid from icon, and selected formatting options
+    // Html with image and formatting UI
+    let replacementHtml = `
+        <div class="card-image-container"> 
+            <img src="${imageUrl}" alt="Bilde" width="100%"/> 
+            <div class="show-card-button">
+                <i class="fa-solid fa-map-location-dot card-icon"></i>Vis
+            </div> 
+            <a href="${downloadUrl}" target="_blank">
+                <div class="download-card-button">
+                    <i class="fa-solid fa-cloud-arrow-down card-icon"></i>Last ned
+                </div> 
+            </a>
+        </div>
+        `;
+        /*
+        Should be added above
+        <div class="formats-dropdown">
+            Format dropdown here
+        </div>
+        */
     htmlContent = htmlContent.replace(/\[bilde\]/g, replacementHtml);
 
     element.innerHTML = htmlContent;
@@ -279,3 +298,29 @@ function filterFunction() {
     // Show the dropdown content when there's input, hide it when there's none.
     div.style.display = isInputEmpty ? "none" : "block";
   }
+
+
+
+
+
+
+
+  //https://kartkatalog.geonorge.no/api/getdata/3de4ddf6-d6b8-4398-8222-f5c47791a757
+    // Sjekk om "CanShowServiceMapUrl": true,
+    // else ignore
+
+    // Regex that replaces after pattern "&wms="
+    // https://norgeskart.no/geoportal/#!?zoom=3&lon=36722&lat=719864&wms=https://nve.geodataonline.no/arcgis/services/SkredKvikkleire2/MapServer/WMSServer
+
+    // replace everything after "&wms"
+    // hent Distributions -> RelatedViewServices -> MapUrl (https://norgeskart.no/geoportal/#!?zoom=3&lon=306722&lat=7197864&wms=https://geo.ngu.no/mapserver/LosmasserWMS2)
+    // insert new mapdata after &wms=
+
+
+
+
+// Add function that sets standards, then checks with API if the dataset has those formats and projections.
+// If it has them, set the UI standards to be our default values.
+// If there are different area, projection, format, than the set standards. Modify the standards to be these.
+
+// Add function for download, that takes uuid, area, format, projection etc

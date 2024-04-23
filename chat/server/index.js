@@ -3,6 +3,7 @@ const { sendApiChatRequest } = require("../../helpers/retrieval_augmented_genera
 const { fetchOpenAIEmbeddings } = require("../../helpers/fetch_openai_embeddings_api");
 const pgvector = require('pgvector/pg');
 const { client, connectClient } = require('../../helpers/connection.js');
+const { getStandardOrFirstFormat, getDownloadUrl } = require('../../helpers/download.js');
 
 
 // Connect and register the client type
@@ -33,7 +34,7 @@ async function RagVectorSearch(vectorArray){
     // Perform the search with the vectorized input
     const searchVector = [pgvector.toSql(vectorArray)];
     const { rows } = await client.query(
-      `SELECT title, abstract, image, title_vector <-> $1 AS distance 
+      `SELECT uuid, title, abstract, image, title_vector <-> $1 AS distance 
          FROM text_embedding_3_large 
          ORDER BY title_vector <-> $1 LIMIT 3`,
       searchVector
@@ -44,20 +45,27 @@ async function RagVectorSearch(vectorArray){
 
 
 // Markdown formatting function
-function checkImageSignal(gptResponse, metadataContextList) {
+async function checkImageSignal(gptResponse, metadataContextList) {
     // Gets image url for datset if in GPT response
     let datasetImageUrl = false;
+    let datasetDownloadUrl = false;
+
     for (let obj of metadataContextList) {
-        if ('image' in obj && obj.image && gptResponse.includes(obj.title)) {
+        if ('uuid' in obj && 'image' in obj && obj.image && gptResponse.includes(obj.title)) {
             let imageUrlList = obj.image.split(',');
             datasetImageUrl = imageUrlList[imageUrlList.length - 1];
+            const downloadFormats = await getStandardOrFirstFormat(obj.uuid);
+            datasetDownloadUrl =  await getDownloadUrl(obj.uuid, downloadFormats);
             break;
         }
     }
 
     // Checks if the response contains the GPT image signal for insertion, and the image url
-    if (gptResponse.includes("[bilde]") && (datasetImageUrl)) {
-        return datasetImageUrl;
+    if (gptResponse.includes("[bilde]") && datasetImageUrl && datasetDownloadUrl) {
+        return {
+            datasetImageUrl,
+            datasetDownloadUrl
+        };
     }
 
     return false;
@@ -146,12 +154,15 @@ server.on('connection', socket => {
                 );
 
                 // Checks if image should be inserted in response
-                const datasetImageUrl = checkImageSignal(fullRagResponse, vdbResponse);
-                if (datasetImageUrl != false) {
+                const datasetImageAndDownload = await checkImageSignal(fullRagResponse, vdbResponse);
+                if (datasetImageAndDownload != false) {
                     // Sends message to insert image in GPT response
                     const insertImage = {
                         action: 'insertImage',
-                        payload: datasetImageUrl,
+                        payload: {
+                            datasetImageUrl: datasetImageAndDownload.datasetImageUrl,
+                            datasetDownloadUrl: datasetImageAndDownload.datasetDownloadUrl,
+                        },
                     };
                     socket.send(JSON.stringify(insertImage));
                 }

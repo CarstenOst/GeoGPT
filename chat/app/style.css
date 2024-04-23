@@ -268,7 +268,6 @@ body {
 
 .map-image {
     position: relative;
-    background-image: url("./map-background.png");
     background-size: cover;
     background-repeat: no-repeat; 
     width: 100%;
