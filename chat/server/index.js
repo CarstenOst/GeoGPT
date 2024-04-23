@@ -54,14 +54,19 @@ async function checkImageSignal(gptResponse, metadataContextList) {
         if ('uuid' in obj && 'image' in obj && obj.image && gptResponse.includes(obj.title)) {
             let imageUrlList = obj.image.split(',');
             datasetImageUrl = imageUrlList[imageUrlList.length - 1];
-            const downloadFormats = await getStandardOrFirstFormat(obj.uuid);
-            datasetDownloadUrl =  await getDownloadUrl(obj.uuid, downloadFormats);
+            try {
+                const downloadFormats = await getStandardOrFirstFormat(obj.uuid);
+                datasetDownloadUrl =  await getDownloadUrl(obj.uuid, downloadFormats);
+            } catch (error) {
+                console.log('Failed to get download link.');
+
+            }
             break;
         }
     }
 
     // Checks if the response contains the GPT image signal for insertion, and the image url
-    if (gptResponse.includes("[bilde]") && datasetImageUrl && datasetDownloadUrl) {
+    if (gptResponse.includes("[bilde]") && datasetImageUrl) {
         return {
             datasetImageUrl,
             datasetDownloadUrl
@@ -96,7 +101,7 @@ server.on('connection', socket => {
                 // Here, multiple VDB sources can be merged into same list, only including top 3 (or N) most relevant VDB results based on distance
 
                 // Filters away columns if it has any array element as substring
-                const columnsToFilter = ['_vector', 'distance', 'image'];
+                const columnsToFilter = ['uuid', '_vector', 'distance', 'image'];
                 const headersKeys = Object.keys(vdbResponse[0]).filter((key) => {
                     return !columnsToFilter.some(filterString => key.includes(filterString));
                   });
