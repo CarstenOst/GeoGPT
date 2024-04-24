@@ -104,27 +104,6 @@ async function getStandardOrFirstFormat(uuid) {
 
 
 
-/*
-const result = (async () => {
-    try {
-        return await getStandardOrFirstFormat("a29b905c-6aaa-4283-ae2c-d167624c08a8");
-    } catch (error) {
-        console.error('Error fetching data:', error.message);
-    }
-})();
-
-
-result.then((data) => {
-    if (data) {
-        console.log(data);
-    } else {
-        console.log("No API response.");
-    }
-});
-*/
-
-
-
 async function getDownloadUrl(metadataUuid, downloadFormats) {
     const email = ""; // Email address
     const softwareClient = "GeoGpt"; // Software client
