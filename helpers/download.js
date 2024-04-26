@@ -14,12 +14,31 @@ async function fetchAreaData(uuid) {
       throw new Error(`HTTP error! status: ${response.status}`);
     }
 
+    // Checks is API response is html page for login (dataset requires login)
+    if (response.url.includes('https://auth2.geoid.no')) {
+        console.log(`API response is HTML login page: ${response.url})}`);
+        return [];
+    }
+
     // Return the parsed JSON response
     return await response.json();
 
   } catch (error) {
     console.error('Error fetching data:', error);
   }
+}
+
+
+async function datasetHasDownload(uuid) {
+    const apiJSON = await fetchAreaData(uuid);
+    const areas = typeof apiJSON === 'string' ? JSON.parse(apiJSON) : apiJSON;
+    // Dataset has download if formats list is not empty
+    if (areas.length > 0) {
+        return true;
+    }
+
+    // Otherwise returns status as false by default
+    return false;
 }
 
 
@@ -169,4 +188,6 @@ async function getDownloadUrl(metadataUuid, downloadFormats) {
 
 
 
-module.exports = { getStandardOrFirstFormat, getDownloadUrl };
+
+
+module.exports = { getStandardOrFirstFormat, getDownloadUrl, datasetHasDownload };

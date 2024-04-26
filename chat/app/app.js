@@ -74,6 +74,7 @@ socket.onmessage = async function(event) {
         case "searchVdbResults":
             const results_div = document.getElementById('results');
             let results = message.payload;
+            // TODO add dynamic check for boolean value weather download and view icon buttons should or should not be shown
              const view_results = results.map((result) => ({
                 ...result,
                 url: `https://kartkatalog.geonorge.no/metadata/${result.title}/${result.uuid}`,
@@ -97,24 +98,34 @@ socket.onmessage = async function(event) {
                 buttons_container.classList.add('result-buttons');
 
                 // Creates the 'show dataset' button
-                const show_button = document.createElement('div');
-                show_button.classList.add('show-dataset');
-                show_button.innerHTML = `<i class="fa-solid fa-map-location-dot show-dataset-icon"></i>
-                    <span class="show-dataset-text">Vis</span>`;
-                buttons_container.appendChild(show_button);
+                if (result.hasWMS) {
+                    const show_button = document.createElement('div');
+                    show_button.classList.add('show-dataset');
+                    show_button.innerHTML = `<i class="fa-solid fa-map-location-dot show-dataset-icon"></i>
+                        <span class="show-dataset-text">Vis</span>`;
+                    show_button.onclick = () => showDatasetWMS(result.uuid);
+                    buttons_container.appendChild(show_button);
+                }
 
                 // Creates the 'download dataset' button
-                const download_button = document.createElement('div');
-                download_button.classList.add('download-dataset');
-                download_button.innerHTML = `<i class="fa-solid fa-cloud-arrow-down download-dataset-icon"></i>
-                    <span class="download-dataset-text">Last ned</span>`;
-                buttons_container.appendChild(download_button);
+                if (result.hasDownload) {
+                    const download_button = document.createElement('div');
+                    download_button.classList.add('download-dataset');
+                    download_button.innerHTML = `<i class="fa-solid fa-cloud-arrow-down download-dataset-icon"></i>
+                        <span class="download-dataset-text">Last ned</span>`;
+                    download_button.onclick = () => downloadDataset(result.uuid);
+                    buttons_container.appendChild(download_button);
+                }
 
                 // Appends the buttons container to the result div
                 result_div.appendChild(buttons_container);
 
                 results_div.appendChild(result_div);
             });
+            break;
+
+        case "downloadDatasetOrder":
+            window.open(message.payload, '_blank');
             break;
 
         default:
@@ -158,6 +169,33 @@ document.getElementById('searchForm').addEventListener('submit', function(event)
     // Send the message from the input field, and clears it
     socket.send(JSON.stringify(message)); 
 });
+
+
+
+// Function that updates map WMS
+function showDatasetWMS(uuid) {
+    console.log(`Show dataset: ${uuid}`);
+    const message = {
+        action: 'showDataset',
+        payload: uuid
+    };
+    socket.send(JSON.stringify(message));
+}
+
+// Function that starts download action
+function downloadDataset(uuid) {
+    console.log(`Download dataset: ${uuid}`);
+    // Should be updated to include user selected area, projection, format etc
+    //const area = document.getElementById('');
+    //const projection = document.getElementById('');
+    //const format = document.getElementById('');
+
+    const message = {
+        action: 'downloadDataset',
+        payload: uuid
+    };
+    socket.send(JSON.stringify(message));
+}
 
 
 
@@ -315,12 +353,3 @@ function filterFunction() {
     // replace everything after "&wms"
     // hent Distributions -> RelatedViewServices -> MapUrl (https://norgeskart.no/geoportal/#!?zoom=3&lon=306722&lat=7197864&wms=https://geo.ngu.no/mapserver/LosmasserWMS2)
     // insert new mapdata after &wms=
-
-
-
-
-// Add function that sets standards, then checks with API if the dataset has those formats and projections.
-// If it has them, set the UI standards to be our default values.
-// If there are different area, projection, format, than the set standards. Modify the standards to be these.
-
-// Add function for download, that takes uuid, area, format, projection etc

@@ -3,7 +3,7 @@ const { sendApiChatRequest } = require("../../helpers/retrieval_augmented_genera
 const { fetchOpenAIEmbeddings } = require("../../helpers/fetch_openai_embeddings_api");
 const pgvector = require('pgvector/pg');
 const { client, connectClient } = require('../../helpers/connection.js');
-const { getStandardOrFirstFormat, getDownloadUrl } = require('../../helpers/download.js');
+const { datasetHasDownload, getStandardOrFirstFormat, getDownloadUrl } = require('../../helpers/download.js');
 
 
 // Connect and register the client type
@@ -47,6 +47,7 @@ async function RagVectorSearch(vectorArray){
 // Markdown formatting function
 async function checkImageSignal(gptResponse, metadataContextList) {
     // Gets image url for datset if in GPT response
+    let datasetUuid = '';
     let datasetImageUrl = false;
     let datasetDownloadUrl = false;
 
@@ -54,20 +55,37 @@ async function checkImageSignal(gptResponse, metadataContextList) {
         if ('uuid' in obj && 'image' in obj && obj.image && gptResponse.includes(obj.title)) {
             let imageUrlList = obj.image.split(',');
             datasetImageUrl = imageUrlList[imageUrlList.length - 1];
+            datasetUuid = obj.uuid;
             try {
-                const downloadFormats = await getStandardOrFirstFormat(obj.uuid);
-                datasetDownloadUrl =  await getDownloadUrl(obj.uuid, downloadFormats);
+                // Checks if dataset is downloadable to decide if icon should be included or not
+                const hasDownload = await datasetHasDownload(obj.uuid);
+                if (hasDownload) {
+                    const downloadFormats = await getStandardOrFirstFormat(obj.uuid);
+                    datasetDownloadUrl =  await getDownloadUrl(obj.uuid, downloadFormats);
+                }
             } catch (error) {
                 console.log('Failed to get download link.');
 
             }
+
+            /*
+            // TODO Add toggle option for if `Vis` icon should be included or not
+            try {
+                //const hasWMS = true; 
+            } catch (error) {
+                console.log('Failed to get dataset WMS link.');
+
+            }
+            */
+
             break;
         }
     }
 
-    // Checks if the response contains the GPT image signal for insertion, and the image url
-    if (gptResponse.includes("[bilde]") && datasetImageUrl) {
+    // Checks if the response contains the GPT image signal for insertion
+    if (gptResponse.includes("[bilde]")) {
         return {
+            datasetUuid,
             datasetImageUrl,
             datasetDownloadUrl
         };
@@ -165,6 +183,7 @@ server.on('connection', socket => {
                     const insertImage = {
                         action: 'insertImage',
                         payload: {
+                            datasetUuid: datasetImageAndDownload.uuid,
                             datasetImageUrl: datasetImageAndDownload.datasetImageUrl,
                             datasetDownloadUrl: datasetImageAndDownload.datasetDownloadUrl,
                         },
@@ -186,17 +205,46 @@ server.on('connection', socket => {
                 // Get the vectorized input from OpenAI
                 const openaiJsonVectorResponse = await fetchOpenAIEmbeddings(searchText);
                 const vdbSearchResponse = await vectorSearch(openaiJsonVectorResponse.data[0].embedding);
+                const apiVerifiedSearchResponse = await Promise.all(vdbSearchResponse.map(async (dataset) => {
+                    const hasDownload = await datasetHasDownload(dataset.uuid);
+                    const hasWMS = true;
+                    return {
+                        ...dataset,
+                        hasDownload: hasDownload,
+                        hasWMS: hasWMS
+                    }
+                }));
+                //console.log(`Vector database results:\n${Object.keys(vdbSearchResponse[0])}\n\n${Object.values(vdbSearchResponse[0])}`);
+                console.log(`Vector database results:\n${Object.keys(apiVerifiedSearchResponse[0])}\n\n${Object.values(apiVerifiedSearchResponse[0])}`);
+                // TODO update teh vdbSearchResponse object list so that the objects includes a boolean value indicating if the dataset has download via API
 
                 // The vector database results are sent
                 const vdbMessage = {
                     action : 'searchVdbResults',
-                    payload : vdbSearchResponse,
-                }
+                    payload : apiVerifiedSearchResponse,
+                };
                 socket.send(JSON.stringify(vdbMessage));               
+                break;
+            
+            case "showDataset":
+                // The logic for getting the dataset WMS should be here
+                break;
+
+            case "downloadDataset":
+                // Checks if the dataset is available for download using API
+
+                // Gets download url using the uuid
+                const downloadFormats = await getStandardOrFirstFormat(data.payload);
+                const datasetDownloadUrl =  await getDownloadUrl(data.payload, downloadFormats);
+
+                const downloadMessage = {
+                    action: 'downloadDatasetOrder',
+                    payload: datasetDownloadUrl
+                }
+                socket.send(JSON.stringify(downloadMessage));
                 break;
         
             default:
-
                 console.log(`${data.action} is an invalid server action.`)
                 break;
         }
