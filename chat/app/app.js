@@ -204,6 +204,17 @@ function customMarkdownImageConversion(elementId, imageUrl, downloadUrl) {
     var element = document.getElementById(elementId);
     if (!element) return;
 
+    // Sets download icon to insert empty if dataset has no download option, otherwise updates with icon
+    let downloadIcon = ``;
+    if (downloadUrl != false) {
+        downloadIcon = `
+            <a href="${downloadUrl}" target="_blank">
+                <div class="download-card-button">
+                    <i class="fa-solid fa-cloud-arrow-down card-icon"></i>Last ned
+                </div> 
+            </a>
+        `;
+    }
     let htmlContent = element.innerHTML;
 
     // TODO replace the <a> download link to be when the button is clicked on the client side, to submit with uuid from icon, and selected formatting options
