@@ -24,25 +24,32 @@ server.on('connection', socket => {
                 const userQuestion = data.payload;
                 let memory = socket.messages.slice(-6);
 
-                // Gets the VDB relevant results which is used in the ragContext
-                const vdbResponse = await getVdbResponse(userQuestion);
-                const ragContext = await getRagContext(vdbResponse);
+                try {
+                    // Gets the VDB relevant results which is used in the ragContext
+                    const vdbResponse = await getVdbResponse(userQuestion);
+                    const ragContext = await getRagContext(vdbResponse);
 
-                // Displays user question in chat
-                await sendUserMessage(userQuestion, socket);
+                    // Displays user question in chat
+                    await sendUserMessage(userQuestion, socket);
 
-                // Sends RAG request with context and instruction
-                const fullRagResponse = await getRagResponse(userQuestion, memory, ragContext, socket);
-                await endRagStream(socket)
+                    // Sends RAG request with context and instruction
+                    const fullRagResponse = await getRagResponse(userQuestion, memory, ragContext, socket);
+                    await endRagStream(socket);
 
-                // Add user's question with context and ragResponse to the messages history
-                socket.messages.push(
-                    { role: "user", content: userQuestion },
-                    { role: "system", content: fullRagResponse },
-                );
+                    // Add user's question with context and ragResponse to the messages history
+                    socket.messages.push(
+                        { role: "user", content: userQuestion },
+                        { role: "system", content: fullRagResponse },
+                    );
 
-                await insertImageRagResponse(fullRagResponse, vdbResponse)
-                await markdownFormatRagMessage(socket);
+                    await insertImageRagResponse(fullRagResponse, vdbResponse, socket)
+                    await markdownFormatRagMessage(socket);   
+                } catch (error) {
+                    // If the chat for some reason fails to complete. It outputs error message, and tries to reset chat submit form
+                    console.log(`Failed to send user message, retrieval of VDB results or RAG response stream: ${error}`);
+                    await endRagStream(socket);
+                }
+                
                 break;
 
             case "searchFormSubmit":

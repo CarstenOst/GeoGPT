@@ -82,7 +82,7 @@ async function getRagResponse(userQuestion, memory, ragContext, socket) {
 }
 
 
-async function insertImageRagResponse(fullRagResponse, vdbResponse) {
+async function insertImageRagResponse(fullRagResponse, vdbResponse, socket) {
     // Checks if image should be inserted in response
     const datasetImageAndDownload = await checkImageSignal(fullRagResponse, vdbResponse);
     if (datasetImageAndDownload != false) {
