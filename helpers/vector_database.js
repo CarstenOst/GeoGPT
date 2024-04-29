@@ -1,3 +1,11 @@
+const pgvector = require('pgvector/pg');
+const { fetchOpenAIEmbeddings } = require("./fetch_openai_embeddings_api.js");
+const { client, connectClient } = require('./connection.js');
+
+// Connect and register the client type
+connectClient();
+pgvector.registerType(client);
+
 
 // Function for the search box
 async function vectorSearch(vectorArray){
@@ -28,4 +36,21 @@ async function RagVectorSearch(vectorArray){
 }
 
 
-module.exports = { vectorSearch, RagVectorSearch };
+async function getVdbResponse(userQuestion) {
+    const jsonInputFromOpenAi = await fetchOpenAIEmbeddings(userQuestion);
+    const vectorizedInputFromUser = jsonInputFromOpenAi.data[0].embedding;
+    const vdbResponse = await RagVectorSearch(vectorizedInputFromUser);
+
+    return vdbResponse;
+}
+
+async function getVdbSearchResponse(query) {
+    const jsonInputFromOpenAi = await fetchOpenAIEmbeddings(query);
+    const vectorizedInputFromUser = jsonInputFromOpenAi.data[0].embedding;
+    const vdbResponse = await vectorSearch(vectorizedInputFromUser);
+
+    return vdbResponse;
+}
+
+
+module.exports = { vectorSearch, RagVectorSearch, getVdbResponse, getVdbSearchResponse };

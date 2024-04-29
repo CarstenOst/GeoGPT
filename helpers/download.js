@@ -16,6 +16,7 @@ async function fetchAreaData(uuid) {
 
     // Checks is API response is html page for login (dataset requires login)
     if (response.url.includes('https://auth2.geoid.no')) {
+        console.log(`API response is HTML login page: ${uuid})}`);
         console.log(`API response is HTML login page: ${response.url})}`);
         return [];
     }
@@ -187,7 +188,23 @@ async function getDownloadUrl(metadataUuid, downloadFormats) {
 }
 
 
+async function getDatasetDownloadAndWmsStatus(vdbSearchResponse) {
+    const apiVerifiedSearchResponse = await Promise.all(vdbSearchResponse.map(async (dataset) => {
+        const hasDownload = await datasetHasDownload(dataset.uuid);
+        const hasWMS = true;
+        return {
+            ...dataset,
+            hasDownload: hasDownload,
+            hasWMS: hasWMS
+        }
+    }));
+
+    return apiVerifiedSearchResponse;
+}
 
 
 
-module.exports = { getStandardOrFirstFormat, getDownloadUrl, datasetHasDownload };
+
+
+
+module.exports = { getStandardOrFirstFormat, getDownloadUrl, datasetHasDownload, getDatasetDownloadAndWmsStatus };
