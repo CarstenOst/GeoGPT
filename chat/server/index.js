@@ -206,7 +206,7 @@ server.on('connection', socket => {
                 const openaiJsonVectorResponse = await fetchOpenAIEmbeddings(searchText);
                 const vdbSearchResponse = await vectorSearch(openaiJsonVectorResponse.data[0].embedding);
                 const apiVerifiedSearchResponse = await Promise.all(vdbSearchResponse.map(async (dataset) => {
-                    const hasDownload = await datasetHasDownload(dataset.uuid);
+                    const hasDownload = datasetHasDownload(dataset.uuid);
                     const hasWMS = true;
                     return {
                         ...dataset,
