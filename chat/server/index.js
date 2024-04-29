@@ -1,6 +1,6 @@
 // Import the necessary modules
 const { getRagContext, getRagResponse, insertImageRagResponse } = require("../../helpers/retrieval_augmented_generation.js");
-const { getStandardOrFirstFormat, getDownloadUrl, getDatasetDownloadAndWmsStatus } = require('../../helpers/download.js');
+const { getStandardOrFirstFormat, datasetHasDownload, getDownloadUrl, getDatasetDownloadAndWmsStatus } = require('../../helpers/download.js');
 const { getVdbResponse, getVdbSearchResponse } = require('../../helpers/vector_database.js');
 const { sendWebsocketMessage, sendUserMessage, endRagStream, markdownFormatRagMessage, sendVdbResults } = require('../../helpers/websocket.js');
 
@@ -80,21 +80,18 @@ server.on('connection', socket => {
                 break;
 
             case "downloadDataset":
+                const datasetUuid = data.payload;
                 try {
-                    // Checks if the dataset is available for download using API
+                    // Double checks if the dataset is available for download using API
+                    const isDownloadable = await datasetHasDownload(datasetUuid);
+                    if (isDownloadable) {
+                        // Sets download format to standard or next format by checking the downloads API
+                        const downloadFormats = await getStandardOrFirstFormat(datasetUuid);
 
-                    // Gets download url using the uuid
-                    const downloadFormats = await getStandardOrFirstFormat(data.payload);
-                    const datasetDownloadUrl =  await getDownloadUrl(data.payload, downloadFormats);
-
-                    await sendWebsocketMessage('downloadDatasetOrder', datasetDownloadUrl, socket)
-                    /*
-                    const downloadMessage = {
-                        action: 'downloadDatasetOrder',
-                        payload: datasetDownloadUrl
+                        // Gets the download url from the downloads API, and sends it to the client
+                        const datasetDownloadUrl =  await getDownloadUrl(datasetUuid, downloadFormats);
+                        await sendWebsocketMessage('downloadDatasetOrder', datasetDownloadUrl, socket)
                     }
-                    socket.send(JSON.stringify(downloadMessage));   
-                    */
                 } catch (error) {
                     console.log(`Server controller failed to start download of dataset: ${error}`);
                 }
