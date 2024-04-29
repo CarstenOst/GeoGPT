@@ -4,6 +4,7 @@ const { fetchOpenAIEmbeddings } = require("../../helpers/fetch_openai_embeddings
 const pgvector = require('pgvector/pg');
 const { client, connectClient } = require('../../helpers/connection.js');
 const { datasetHasDownload, getStandardOrFirstFormat, getDownloadUrl } = require('../../helpers/download.js');
+const { vectorSearch, RagVectorSearch } = require('../../helpers/vector_database.js');
 
 
 // Connect and register the client type
@@ -13,35 +14,6 @@ pgvector.registerType(client);
 const WebSocket = require('ws');
 const server = new WebSocket.Server( {port : '8080'} );
 
-
-
-// Function for the search box
-async function vectorSearch(vectorArray){
-    // Perform the search with the vectorized input
-    const searchVector = [pgvector.toSql(vectorArray)];
-    const { rows } = await client.query(
-      `SELECT uuid, title, title_vector <-> $1 AS distance 
-         FROM text_embedding_3_large 
-         ORDER BY title_vector <-> $1 LIMIT 20`,
-      searchVector
-    );
-  
-    return rows;
-}
-
-// Search function used for RAG
-async function RagVectorSearch(vectorArray){
-    // Perform the search with the vectorized input
-    const searchVector = [pgvector.toSql(vectorArray)];
-    const { rows } = await client.query(
-      `SELECT uuid, title, abstract, image, title_vector <-> $1 AS distance 
-         FROM text_embedding_3_large 
-         ORDER BY title_vector <-> $1 LIMIT 3`,
-      searchVector
-    );
-  
-    return rows;
-}
 
 
 // Markdown formatting function
@@ -206,7 +178,7 @@ server.on('connection', socket => {
                 const openaiJsonVectorResponse = await fetchOpenAIEmbeddings(searchText);
                 const vdbSearchResponse = await vectorSearch(openaiJsonVectorResponse.data[0].embedding);
                 const apiVerifiedSearchResponse = await Promise.all(vdbSearchResponse.map(async (dataset) => {
-                    const hasDownload = datasetHasDownload(dataset.uuid);
+                    const hasDownload = await datasetHasDownload(dataset.uuid);
                     const hasWMS = true;
                     return {
                         ...dataset,
