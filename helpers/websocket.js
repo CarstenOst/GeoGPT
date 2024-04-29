@@ -1,3 +1,11 @@
+async function sendWebsocketMessage(action, payload, socket) {
+    const message = {
+        action: action,
+        payload: payload,
+    };
+    socket.send(JSON.stringify(message));
+}
+
 async function sendUserMessage(userMessage, socket) {
     // First sends the user message
     const message = {
@@ -34,4 +42,4 @@ async function sendVdbResults(vdbResultObjects, socket) {
     socket.send(JSON.stringify(vdbMessage)); 
 }
 
-module.exports = { sendUserMessage, endRagStream, markdownFormatRagMessage, sendVdbResults};
+module.exports = { sendWebsocketMessage, sendUserMessage, endRagStream, markdownFormatRagMessage, sendVdbResults};

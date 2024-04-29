@@ -2,7 +2,7 @@
 const { getRagContext, getRagResponse, insertImageRagResponse } = require("../../helpers/retrieval_augmented_generation.js");
 const { getStandardOrFirstFormat, getDownloadUrl, getDatasetDownloadAndWmsStatus } = require('../../helpers/download.js');
 const { getVdbResponse, getVdbSearchResponse } = require('../../helpers/vector_database.js');
-const { sendUserMessage, endRagStream, markdownFormatRagMessage, sendVdbResults } = require('../../helpers/websocket.js');
+const { sendWebsocketMessage, sendUserMessage, endRagStream, markdownFormatRagMessage, sendVdbResults } = require('../../helpers/websocket.js');
 
 
 
@@ -31,6 +31,7 @@ server.on('connection', socket => {
 
                     // Displays user question in chat
                     await sendUserMessage(userQuestion, socket);
+                    //await sendWebsocketMessage('userMessage', userQuestion, socket);
 
                     // Sends RAG request with context and instruction
                     const fullRagResponse = await getRagResponse(userQuestion, memory, ragContext, socket);
@@ -46,46 +47,62 @@ server.on('connection', socket => {
                     await markdownFormatRagMessage(socket);   
                 } catch (error) {
                     // If the chat for some reason fails to complete. It outputs error message, and tries to reset chat submit form
-                    console.log(`Failed to send user message, retrieval of VDB results or RAG response stream: ${error}`);
+                    console.log(`Server controller failed to send user message, retrieval of VDB results or RAG response stream: ${error}`);
                     await endRagStream(socket);
                 }
                 
                 break;
 
             case "searchFormSubmit":
-                // Searches the vector database using the query from the message payload
-                const vdbSearchResponse = await getVdbSearchResponse(data.payload)
-                
-                const datasetsWithDownloadAndWmsStatus = await getDatasetDownloadAndWmsStatus(vdbSearchResponse);
+                const query = data.payload;
+                try {
+                    // Searches the vector database using the query from the message payload
+                    const vdbSearchResponse = await getVdbSearchResponse(query);
+                    const datasetsWithDownloadAndWmsStatus = await getDatasetDownloadAndWmsStatus(vdbSearchResponse);
 
-                //console.log(`Vector database results:\n${Object.keys(vdbSearchResponse[0])}\n\n${Object.values(vdbSearchResponse[0])}`);
-                console.log(`Vector database results:\n${Object.keys(datasetsWithDownloadAndWmsStatus[0])}\n\n${Object.values(datasetsWithDownloadAndWmsStatus[0])}`);
-                // TODO update teh vdbSearchResponse object list so that the objects includes a boolean value indicating if the dataset has download via API
+                    //console.log(`Vector database results:\n${Object.keys(vdbSearchResponse[0])}\n\n${Object.values(vdbSearchResponse[0])}`);
+                    console.log(`Vector database results:\n${Object.keys(datasetsWithDownloadAndWmsStatus[0])}\n\n${Object.values(datasetsWithDownloadAndWmsStatus[0])}`);
 
-                await sendVdbResults(datasetsWithDownloadAndWmsStatus, socket);
-              
+                    // Sends the VDB results to the client for display over the socket
+                    await sendVdbResults(datasetsWithDownloadAndWmsStatus, socket);
+                } catch (error) {
+                    console.log(`Server controller failed to get the VDB results, or send them to the client: ${error}`);
+                }
                 break;
             
             case "showDataset":
                 // The logic for getting the dataset WMS should be here
+                try {
+                    
+                } catch (error) {
+                    console.log(`Server controller failed to show the Dataset using its WMS: ${error}`);
+                }
                 break;
 
             case "downloadDataset":
-                // Checks if the dataset is available for download using API
+                try {
+                    // Checks if the dataset is available for download using API
 
-                // Gets download url using the uuid
-                const downloadFormats = await getStandardOrFirstFormat(data.payload);
-                const datasetDownloadUrl =  await getDownloadUrl(data.payload, downloadFormats);
+                    // Gets download url using the uuid
+                    const downloadFormats = await getStandardOrFirstFormat(data.payload);
+                    const datasetDownloadUrl =  await getDownloadUrl(data.payload, downloadFormats);
 
-                const downloadMessage = {
-                    action: 'downloadDatasetOrder',
-                    payload: datasetDownloadUrl
+                    await sendWebsocketMessage('downloadDatasetOrder', datasetDownloadUrl, socket)
+                    /*
+                    const downloadMessage = {
+                        action: 'downloadDatasetOrder',
+                        payload: datasetDownloadUrl
+                    }
+                    socket.send(JSON.stringify(downloadMessage));   
+                    */
+                } catch (error) {
+                    console.log(`Server controller failed to start download of dataset: ${error}`);
                 }
-                socket.send(JSON.stringify(downloadMessage));
+                
                 break;
         
             default:
-                console.log(`${data.action} is an invalid server action.`)
+                console.log(`Server controller received an invalid server action. Action: ${data.action}.`)
                 break;
         }
 
