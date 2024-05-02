@@ -48,7 +48,7 @@ server.on('connection', socket => {
                 } catch (error) {
                     // If the chat for some reason fails to complete. It outputs error message, and tries to reset chat submit form
                     console.log(`Server controller failed to send user message, retrieval of VDB results or RAG response stream: ${error}`);
-                    await endRagStream(socket);
+                    await sendWebsocketAction('streamComplete', socket)
                 }
                 
                 break;

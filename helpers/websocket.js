@@ -15,17 +15,6 @@ async function sendWebsocketAction(action, socket) {
 }
 
 
-async function sendUserMessage(userMessage, socket) {
-    // First sends the user message
-    const message = {
-        action: 'userMessage',
-        payload: userMessage,
-    };
-    socket.send(JSON.stringify(message));
-}
-
-
-
 async function sendVdbResults(vdbResultObjects, socket) {
     // The vector database results are sent
     const vdbMessage = {
