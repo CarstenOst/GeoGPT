@@ -164,8 +164,6 @@ async function getDownloadUrl(metadataUuid, downloadFormats) {
         ],
     };
 
-    console.log(`Sendt the request with body: ${orderRequest}`);
-
     let response = await fetch(`https://nedlasting.geonorge.no/api/order`, {
         method: 'POST',
         headers: {
