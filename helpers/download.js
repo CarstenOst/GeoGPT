@@ -189,15 +189,22 @@ async function getDownloadUrl(metadataUuid, downloadFormats) {
 
 
 async function getDatasetDownloadAndWmsStatus(vdbSearchResponse) {
-    const apiVerifiedSearchResponse = await Promise.all(vdbSearchResponse.map(async (dataset) => {
-        const hasDownload = await datasetHasDownload(dataset.uuid);
-        const hasWMS = true;
-        return {
-            ...dataset,
-            hasDownload: hasDownload,
-            hasWMS: hasWMS
-        }
-    }));
+    // Parallel async API check of all datasets downloadability, which is added to the objects
+    const downloadPromises = vdbSearchResponse.map((dataset) => {
+        return datasetHasDownload(dataset.uuid)
+            .then(hasDownload => {
+
+                return {
+                    ...dataset,
+                    hasDownload: hasDownload,
+                    hasWMS: true
+                };
+            });
+    });
+
+    // Waits for the promises to be resolved before continuing
+    const apiVerifiedSearchResponse = await Promise.all(downloadPromises);
+
 
     return apiVerifiedSearchResponse;
 }
