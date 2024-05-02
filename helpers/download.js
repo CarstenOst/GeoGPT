@@ -195,7 +195,7 @@ async function getDatasetDownloadAndWmsStatus(vdbSearchResponse) {
                 return {
                     ...dataset,
                     hasDownload: hasDownload,
-                    hasWMS: true
+                    hasWMS: true // TODO this needs updating to use API check function at later date
                 };
             });
     });
