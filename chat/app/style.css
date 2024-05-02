@@ -133,7 +133,7 @@ body {
 
     position: absolute;
     width: 300px;
-    height: 280px;
+    height: 350px;
 
     min-width: 300px;
     min-height: 280px;
@@ -249,6 +249,12 @@ body {
     cursor: pointer;
     text-decoration: underline;
 }
+
+/* Search formatting form */
+.vector-search-form-field {
+    display: flex;
+}
+
 
 
 /* Header Geonorge Logo image, and WMS map */

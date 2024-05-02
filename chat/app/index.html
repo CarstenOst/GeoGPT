@@ -14,6 +14,11 @@
     <link rel="stylesheet" href="style.css">
     <script defer src="app.js"> </script>
     <script src="https://kit.fontawesome.com/5928831ae4.js" crossorigin="anonymous"></script>
+
+    <!-- Searchable dropdown formatting form fields -->
+    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0/dist/css/select2.min.css" rel="stylesheet" />
+    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0/dist/js/select2.full.min.js"></script>
+
 </head>
 
     <body>
@@ -21,6 +26,9 @@
 
         <div id="header" class="header-image">
         </div>
+        -->
+
+        <!--
         -->
 
         <iframe
@@ -31,6 +39,7 @@
             allowfullscreen>
         </iframe>
         
+        <!-- RAG assistant chat -->
         <div id="resizeChatDiv" class="dragable-chat">
             <div id="chatMessages">
                 <div class="system-message">Hei! Jeg er GeoGPT, og skal hjelpe deg finne datasettene du leter etter på Geonorge.</div>
@@ -51,6 +60,8 @@
         </div>
         
         
+        
+        <!-- Vector database search -->
         <div id="resizeSearchDiv" class="dragable-search">
             <div class="search-drag-handle">
                 <b class="search-title">Kartkatalogen</b>
@@ -83,6 +94,51 @@
                 </div>
             </div>
 
+
+            <form id="vdbResultsDownloadFormats">
+                <div class="vector-search-form-field">
+                    <label for="searchDownloadArea">Geografisk område:</label>
+                    <select id="searchDownloadArea" name="searchDownloadArea" style="width: 100%;">
+                        <option value="Hele landet">Hele landet</option>
+                        <option value="Agder">Agder</option>
+                        <option value="Akershus">Akershus</option>
+                        <option value="Buskerud">Buskerud</option>
+                    </select>
+                </div>
+            
+                <div class="vector-search-form-field">
+                    <label for="searchDownloadProjection">Projeksjon:</label>
+                    <select id="searchDownloadProjection" name="searchDownloadProjection" style="width: 100%;">
+                        <option value="EUREF89 UTM sone 32, 2d">EUREF89 UTM sone 32, 2d</option>
+                        <option value="EUREF89 UTM sone 33, 2d">EUREF89 UTM sone 33, 2d</option>
+                    </select>
+                </div>
+            
+                <div class="vector-search-form-field">
+                    <label for="searchDownloadFormat">Format:</label>
+                    <select id="searchDownloadFormat" name="searchDownloadFormat" style="width: 100%;">
+                        <option value="GML">GML</option>
+                        <option value="PostGIS">PostGIS</option>
+                        <option value="FGDB">FGDB</option>
+                        <option value="SOSI">SOSI</option>
+                    </select>
+                </div>
+ 
+                <div class="vector-search-form-field">
+                    <label for="searchDownloadFormat">Brukergruppe:</label>
+                    <select id="searchDownloadFormat" name="searchDownloadFormat" style="width: 100%;">
+                        <option value="GeoGPT">GeoGPT</option>
+                    </select>
+                </div>
+ 
+                <div class="vector-search-form-field">
+                    <label for="searchDownloadFormat">Formål:</label>
+                    <select id="searchDownloadFormat" name="searchDownloadFormat" style="width: 100%;">
+                        <option value="Beredskap">Beredskap</option>
+                        <option value="Forskning">Forskning</option>
+                    </select>
+                </div>
+            </form>
 
             <div id="results">
                 <!-- Example results for testing -->
@@ -168,13 +224,13 @@
                 <!-- Example results for testing -->
 
                 <!-- results will be displayed here -->
-            </div>
+                
 
-            <div class="search-drag-handle">
-                <i class="fa-regular fa-grip-lines"></i>
-            </div>
         </div>
 
+        <div class="search-drag-handle">
+            <i class="fa-regular fa-grip-lines"></i>
+        </div>
 
     </body>
 </html>

@@ -80,7 +80,9 @@ server.on('connection', socket => {
                 break;
 
             case "downloadDataset":
-                const datasetUuid = data.payload;
+                const datasetUuid = data.payload.uuid;
+                const chosenFormats = data.payload.selectedFormats;
+
                 try {
                     // Double checks if the dataset is available for download using API
                     const isDownloadable = await datasetHasDownload(datasetUuid);

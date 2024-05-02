@@ -6,6 +6,125 @@ let chatMessageId = 0;
 let currentSystemMessageDiv = null;
 let currentUserMessageDiv = null;
 
+
+// This starts off as empty, which is then updated on vector database searches to include the downloadable datasets available area, projection, format, 
+// so that their download icons show if it's supported, or need selection of supported formatting
+let datasetsAreaProjectionFormat = {
+    "a29b905c-6aaa-4283-ae2c-d167624c08a8" : [
+        {
+            "type": "fylke",
+            "name": "Agder",
+            "code": "42",
+            "projections": [
+                {
+                    "code": "25832",
+                    "name": "EUREF89 UTM sone 32, 2d",
+                    "codespace": "http://www.opengis.net/def/crs/EPSG/0/25832",
+                    "formats": [
+                        /* Removed as a test example of format that disables download icon
+                        {
+                            "name": "GML"
+                        },
+                        */
+                        {
+                            "name": "PostGIS"
+                        },
+                        {
+                            "name": "FGDB"
+                        },
+                        {
+                            "name": "SOSI"
+                        }
+                    ]
+                },
+                {
+                    "code": "25833",
+                    "name": "EUREF89 UTM sone 33, 2d",
+                    "codespace": "http://www.opengis.net/def/crs/EPSG/0/25833",
+                    "formats": [
+                        {
+                            "name": "GML"
+                        },
+                        {
+                            "name": "PostGIS"
+                        },
+                        {
+                            "name": "FGDB"
+                        },
+                        {
+                            "name": "SOSI"
+                        }
+                    ]
+                }
+            ],
+            "formats": [
+                {
+                    "name": "GML",
+                    "projections": [
+                        {
+                            "code": "25832",
+                            "name": "EUREF89 UTM sone 32, 2d",
+                            "codespace": "http://www.opengis.net/def/crs/EPSG/0/25832"
+                        },
+                        {
+                            "code": "25833",
+                            "name": "EUREF89 UTM sone 33, 2d",
+                            "codespace": "http://www.opengis.net/def/crs/EPSG/0/25833"
+                        }
+                    ]
+                },
+                {
+                    "name": "PostGIS",
+                    "projections": [
+                        {
+                            "code": "25832",
+                            "name": "EUREF89 UTM sone 32, 2d",
+                            "codespace": "http://www.opengis.net/def/crs/EPSG/0/25832"
+                        },
+                        {
+                            "code": "25833",
+                            "name": "EUREF89 UTM sone 33, 2d",
+                            "codespace": "http://www.opengis.net/def/crs/EPSG/0/25833"
+                        }
+                    ]
+                },
+                {
+                    "name": "FGDB",
+                    "projections": [
+                        {
+                            "code": "25832",
+                            "name": "EUREF89 UTM sone 32, 2d",
+                            "codespace": "http://www.opengis.net/def/crs/EPSG/0/25832"
+                        },
+                        {
+                            "code": "25833",
+                            "name": "EUREF89 UTM sone 33, 2d",
+                            "codespace": "http://www.opengis.net/def/crs/EPSG/0/25833"
+                        }
+                    ]
+                },
+                {
+                    "name": "SOSI",
+                    "projections": [
+                        {
+                            "code": "25832",
+                            "name": "EUREF89 UTM sone 32, 2d",
+                            "codespace": "http://www.opengis.net/def/crs/EPSG/0/25832"
+                        },
+                        {
+                            "code": "25833",
+                            "name": "EUREF89 UTM sone 33, 2d",
+                            "codespace": "http://www.opengis.net/def/crs/EPSG/0/25833"
+                        }
+                    ]
+                }
+            ]
+        },
+    ],
+
+    // More uuids and their area, projections, formats
+};
+
 socket.onopen = () => {
     // TODO remove this logging
     console.log('WebSocket connection established');
@@ -84,6 +203,7 @@ socket.onmessage = async function(event) {
                 // Creates new result item with child elements
                 const result_div = document.createElement('div');
                 result_div.classList.add('result-item');
+                result_div.setAttribute('dataset-uuid', result.uuid);
 
 
                 // Adds title with dataset link
@@ -122,6 +242,8 @@ socket.onmessage = async function(event) {
 
                 results_div.appendChild(result_div);
             });
+
+            updateDownloadFormats();
             break;
 
         case "downloadDatasetOrder":
@@ -160,16 +282,106 @@ document.getElementById('chatForm').addEventListener('submit', function(event) {
 document.getElementById('searchForm').addEventListener('submit', function(event) {
     // Prevent the default form submission and clears previous search results
     event.preventDefault(); 
+    // Send the message from the input field, and clears the results
     document.getElementById('results').innerHTML = '';
     const message = {
         action : 'searchFormSubmit',
         payload : document.getElementById('searchInput').value,
     }
     
-    // Send the message from the input field, and clears it
     socket.send(JSON.stringify(message)); 
 });
 
+// Function for dynamically displaying filters on search
+function filterFunction() {
+    var input, filter, div, a, i;
+    input = document.getElementById("searchFilter");
+    filter = input.value.toUpperCase();
+    div = document.getElementById("filterDropdown");
+    a = div.getElementsByTagName("a");
+    let isInputEmpty = input.value.trim() === '';
+
+    // If there's no input, hide all links. Otherwise, follow the existing show/hide logic.
+    for (i = 0; i < a.length; i++) {
+        if (isInputEmpty) {
+        a[i].style.display = "none";
+        } else {
+        let txtValue = a[i].textContent || a[i].innerText;
+        a[i].style.display = txtValue.toUpperCase().indexOf(filter) > -1 ? "" : "none";
+        }
+    }
+
+    // Show the dropdown content when there's input, hide it when there's none.
+    div.style.display = isInputEmpty ? "none" : "block";
+}
+
+
+
+
+// This needs to be performed after searches as well, so that the list is updated
+document.addEventListener('DOMContentLoaded', function() {
+    document.getElementById('vdbResultsDownloadFormats').addEventListener('change', function(event) {
+        updateDownloadFormats();
+    });
+});
+
+function updateDownloadFormats () {
+    // Gets formating form field values
+    const selectedArea = document.getElementById('searchDownloadArea').value;
+    const selectedProjection = document.getElementById('searchDownloadProjection').value;
+    const selectedFormat = document.getElementById('searchDownloadFormat').value;
+
+    // Iterate over result items to check if they should be updated
+    document.querySelectorAll('.result-item').forEach(resultItem => {
+        const uuid = resultItem.getAttribute('dataset-uuid');
+        const dataset = datasetsAreaProjectionFormat[uuid];
+
+        // Checks if the result item is in datasetsAreaProjectionFormat (is downloadable), and thus require it to be updated on area, projection and format changes
+        if (dataset) {
+            // Find if there is a match for area, projection, and format (it can be downloaded with selected options)
+            const isSupported = dataset.some(area => {
+                const areaMatch = area.name === selectedArea;
+                const projectionMatch = area.projections.some(proj => 
+                    proj.name === selectedProjection && proj.formats.some(fmt => fmt.name === selectedFormat));
+                return areaMatch && projectionMatch;
+            });
+
+            // Adds or removes alert icon based on if the dataset can be downloaded, or is not supported in the selected formatting
+            updateDownloadAlertIcon(resultItem, isSupported);
+        }
+    });
+}
+
+function updateDownloadAlertIcon(element, isSupported) {
+    // Gets the area with show and download icons
+    const downloadSection = element.querySelector('.download-dataset');
+    let icon = downloadSection.querySelector('.extra-icon');
+
+    // Updates to include/remove alert icon based on if the formatting is supported or not for the dataset
+    if (!isSupported) {
+        // Add the icon if it's not already there
+        if (!icon) {
+            icon = document.createElement('i');
+            icon.className = 'fa-solid fa-exclamation-circle extra-icon';
+            downloadSection.appendChild(icon);
+
+            downloadSection.onclick = () => openModalDownloadFormats();
+        }
+    } else {
+        // Remove the icon if it exists
+        if (icon) {
+            const uuid = element.getAttribute('dataset-uuid');
+            console.log(`Added download function with uuid: ${uuid}`);
+            icon.remove();
+            // Adds back the 
+            downloadSection.onclick = () => downloadDataset(uuid);
+        }
+    }
+}
+
+function openModalDownloadFormats() {
+    alert("Dette datasettet er ikke tilgjengelig i denne formateringen.");
+}
 
 
 // Function that updates map WMS
@@ -186,16 +398,29 @@ function showDatasetWMS(uuid) {
 function downloadDataset(uuid) {
     console.log(`Download dataset: ${uuid}`);
     // Should be updated to include user selected area, projection, format etc
-    //const area = document.getElementById('');
-    //const projection = document.getElementById('');
-    //const format = document.getElementById('');
+    const area = document.getElementById('searchDownloadArea').value;
+    const projection = document.getElementById('searchDownloadProjection').value;
+    const format = document.getElementById('searchDownloadFormat').value;
+    const userGroup = "GeoGPT";//document.getElementById('searchDownloadUserGroup').value;
+    const useCase = "Beredskap";//document.getElementById('searchDownloadUseCase').value;
 
     const message = {
         action: 'downloadDataset',
-        payload: uuid
+        payload: {
+            uuid: uuid,
+            selectedFormats: {
+                area: area,
+                projection: projection,
+                format: format,
+                userGroup: userGroup,
+                useCase: useCase,
+            },
+        },
     };
     socket.send(JSON.stringify(message));
 }
+
+
 
 
 
@@ -230,6 +455,10 @@ function customMarkdownImageConversion(elementId, imageUrl, downloadUrl) {
                     <i class="fa-solid fa-cloud-arrow-down card-icon"></i>Last ned
                 </div> 
             </a>
+        </div>
+        <div>
+            <form>
+            </form>
         </div>
         `;
         /*
@@ -325,42 +554,3 @@ $(document).ready(function() {
 
 
 
-// Function for dynamically displaying filters on search
-function filterFunction() {
-    var input, filter, div, a, i;
-    input = document.getElementById("searchFilter");
-    filter = input.value.toUpperCase();
-    div = document.getElementById("filterDropdown");
-    a = div.getElementsByTagName("a");
-    let isInputEmpty = input.value.trim() === '';
-  
-    // If there's no input, hide all links. Otherwise, follow the existing show/hide logic.
-    for (i = 0; i < a.length; i++) {
-      if (isInputEmpty) {
-        a[i].style.display = "none";
-      } else {
-        let txtValue = a[i].textContent || a[i].innerText;
-        a[i].style.display = txtValue.toUpperCase().indexOf(filter) > -1 ? "" : "none";
-      }
-    }
-  
-    // Show the dropdown content when there's input, hide it when there's none.
-    div.style.display = isInputEmpty ? "none" : "block";
-  }
-
-
-
-
-
-
-
-  //https://kartkatalog.geonorge.no/api/getdata/3de4ddf6-d6b8-4398-8222-f5c47791a757
-    // Sjekk om "CanShowServiceMapUrl": true,
-    // else ignore
-
-    // Regex that replaces after pattern "&wms="
-    // https://norgeskart.no/geoportal/#!?zoom=3&lon=36722&lat=719864&wms=https://nve.geodataonline.no/arcgis/services/SkredKvikkleire2/MapServer/WMSServer
-
-    // replace everything after "&wms"
-    // hent Distributions -> RelatedViewServices -> MapUrl (https://norgeskart.no/geoportal/#!?zoom=3&lon=306722&lat=7197864&wms=https://geo.ngu.no/mapserver/LosmasserWMS2)
-    // insert new mapdata after &wms=
