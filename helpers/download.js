@@ -188,7 +188,7 @@ async function getDownloadUrl(metadataUuid, downloadFormats) {
 
 async function getDatasetDownloadAndWmsStatus(vdbSearchResponse) {
     // Parallel async API check of all datasets downloadability, which is added to the objects
-    const downloadPromises = vdbSearchResponse.map((dataset) => {
+    const downloadPromises = vdbSearchResponse.map(dataset => {
         return datasetHasDownload(dataset.uuid)
             .then(hasDownload => {
 
