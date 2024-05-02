@@ -2,7 +2,7 @@
 const { getRagContext, getRagResponse, insertImageRagResponse } = require("../../helpers/retrieval_augmented_generation.js");
 const { getStandardOrFirstFormat, datasetHasDownload, getDownloadUrl, getDatasetDownloadAndWmsStatus } = require('../../helpers/download.js');
 const { getVdbResponse, getVdbSearchResponse } = require('../../helpers/vector_database.js');
-const { sendWebsocketMessage, sendUserMessage, endRagStream, markdownFormatRagMessage, sendVdbResults } = require('../../helpers/websocket.js');
+const { sendWebsocketMessage, sendWebsocketAction, sendVdbResults } = require('../../helpers/websocket.js');
 
 
 
@@ -30,12 +30,11 @@ server.on('connection', socket => {
                     const ragContext = await getRagContext(vdbResponse);
 
                     // Displays user question in chat
-                    await sendUserMessage(userQuestion, socket);
-                    //await sendWebsocketMessage('userMessage', userQuestion, socket);
+                    await sendWebsocketMessage('userMessage', userQuestion, socket);
 
                     // Sends RAG request with context and instruction
                     const fullRagResponse = await getRagResponse(userQuestion, memory, ragContext, socket);
-                    await endRagStream(socket);
+                    await sendWebsocketAction('streamComplete', socket);
 
                     // Add user's question with context and ragResponse to the messages history
                     socket.messages.push(
@@ -43,8 +42,9 @@ server.on('connection', socket => {
                         { role: "system", content: fullRagResponse },
                     );
 
+                    // Checks for signal indicating if the chat message should include image UI, then markdown formats RAG message
                     await insertImageRagResponse(fullRagResponse, vdbResponse, socket)
-                    await markdownFormatRagMessage(socket);   
+                    await sendWebsocketAction('formatMarkdown', socket);
                 } catch (error) {
                     // If the chat for some reason fails to complete. It outputs error message, and tries to reset chat submit form
                     console.log(`Server controller failed to send user message, retrieval of VDB results or RAG response stream: ${error}`);

@@ -6,6 +6,15 @@ async function sendWebsocketMessage(action, payload, socket) {
     socket.send(JSON.stringify(message));
 }
 
+
+async function sendWebsocketAction(action, socket) {
+    const message = {
+        action: action,
+    };
+    socket.send(JSON.stringify(message));
+}
+
+
 async function sendUserMessage(userMessage, socket) {
     // First sends the user message
     const message = {
@@ -15,22 +24,6 @@ async function sendUserMessage(userMessage, socket) {
     socket.send(JSON.stringify(message));
 }
 
-async function endRagStream(socket) {
-    // Sends message indicating the stream is complete
-    const streamComplete = {
-        action: 'streamComplete',
-    };
-    socket.send(JSON.stringify(streamComplete));
-}
-
-
-async function markdownFormatRagMessage(socket) {
-    // Sends signal to format message markdown into html
-    const formatMessage = {
-        action: 'formatMarkdown',
-    };
-    socket.send(JSON.stringify(formatMessage));
-}
 
 
 async function sendVdbResults(vdbResultObjects, socket) {
@@ -42,4 +35,4 @@ async function sendVdbResults(vdbResultObjects, socket) {
     socket.send(JSON.stringify(vdbMessage)); 
 }
 
-module.exports = { sendWebsocketMessage, sendUserMessage, endRagStream, markdownFormatRagMessage, sendVdbResults};
+module.exports = { sendWebsocketMessage, sendWebsocketAction, sendVdbResults};
