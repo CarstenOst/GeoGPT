@@ -15,13 +15,4 @@ async function sendWebsocketAction(action, socket) {
 }
 
 
-async function sendVdbResults(vdbResultObjects, socket) {
-    // The vector database results are sent
-    const vdbMessage = {
-        action : 'searchVdbResults',
-        payload : vdbResultObjects,
-    };
-    socket.send(JSON.stringify(vdbMessage)); 
-}
-
-module.exports = { sendWebsocketMessage, sendWebsocketAction, sendVdbResults};
+module.exports = { sendWebsocketMessage, sendWebsocketAction};

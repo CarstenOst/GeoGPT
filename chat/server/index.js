@@ -2,7 +2,7 @@
 const { getRagContext, getRagResponse, insertImageRagResponse } = require("../../helpers/retrieval_augmented_generation.js");
 const { getStandardOrFirstFormat, datasetHasDownload, getDownloadUrl, getDatasetDownloadAndWmsStatus } = require('../../helpers/download.js');
 const { getVdbResponse, getVdbSearchResponse } = require('../../helpers/vector_database.js');
-const { sendWebsocketMessage, sendWebsocketAction, sendVdbResults } = require('../../helpers/websocket.js');
+const { sendWebsocketMessage, sendWebsocketAction } = require('../../helpers/websocket.js');
 
 
 
@@ -48,7 +48,7 @@ server.on('connection', socket => {
                 } catch (error) {
                     // If the chat for some reason fails to complete. It outputs error message, and tries to reset chat submit form
                     console.log(`Server controller failed to send user message, retrieval of VDB results or RAG response stream: ${error}`);
-                    await sendWebsocketAction('streamComplete', socket)
+                    await sendWebsocketAction('streamComplete', socket);
                 }
                 
                 break;
@@ -64,7 +64,7 @@ server.on('connection', socket => {
                     console.log(`Vector database results:\n${Object.keys(datasetsWithDownloadAndWmsStatus[0])}\n\n${Object.values(datasetsWithDownloadAndWmsStatus[0])}`);
 
                     // Sends the VDB results to the client for display over the socket
-                    await sendVdbResults(datasetsWithDownloadAndWmsStatus, socket);
+                    await sendWebsocketMessage('searchVdbResults', datasetsWithDownloadAndWmsStatus, socket);
                 } catch (error) {
                     console.log(`Server controller failed to get the VDB results, or send them to the client: ${error}`);
                 }
