@@ -74,8 +74,6 @@ async function getRagResponse(userQuestion, memory, ragContext, socket) {
         },
     ];
 
-    console.log(messages);
-
     const ragResponse = await sendApiChatRequest(messages, socket);
 
     return ragResponse;
