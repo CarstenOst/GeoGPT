@@ -9,121 +9,7 @@ let currentUserMessageDiv = null;
 
 // This starts off as empty, which is then updated on vector database searches to include the downloadable datasets available area, projection, format, 
 // so that their download icons show if it's supported, or need selection of supported formatting
-let datasetsAreaProjectionFormat = {
-    "a29b905c-6aaa-4283-ae2c-d167624c08a8" : [
-        {
-            "type": "fylke",
-            "name": "Agder",
-            "code": "42",
-            "projections": [
-                {
-                    "code": "25832",
-                    "name": "EUREF89 UTM sone 32, 2d",
-                    "codespace": "http://www.opengis.net/def/crs/EPSG/0/25832",
-                    "formats": [
-                        /* Removed as a test example of format that disables download icon
-                        {
-                            "name": "GML"
-                        },
-                        */
-                        {
-                            "name": "PostGIS"
-                        },
-                        {
-                            "name": "FGDB"
-                        },
-                        {
-                            "name": "SOSI"
-                        }
-                    ]
-                },
-                {
-                    "code": "25833",
-                    "name": "EUREF89 UTM sone 33, 2d",
-                    "codespace": "http://www.opengis.net/def/crs/EPSG/0/25833",
-                    "formats": [
-                        {
-                            "name": "GML"
-                        },
-                        {
-                            "name": "PostGIS"
-                        },
-                        {
-                            "name": "FGDB"
-                        },
-                        {
-                            "name": "SOSI"
-                        }
-                    ]
-                }
-            ],
-            "formats": [
-                {
-                    "name": "GML",
-                    "projections": [
-                        {
-                            "code": "25832",
-                            "name": "EUREF89 UTM sone 32, 2d",
-                            "codespace": "http://www.opengis.net/def/crs/EPSG/0/25832"
-                        },
-                        {
-                            "code": "25833",
-                            "name": "EUREF89 UTM sone 33, 2d",
-                            "codespace": "http://www.opengis.net/def/crs/EPSG/0/25833"
-                        }
-                    ]
-                },
-                {
-                    "name": "PostGIS",
-                    "projections": [
-                        {
-                            "code": "25832",
-                            "name": "EUREF89 UTM sone 32, 2d",
-                            "codespace": "http://www.opengis.net/def/crs/EPSG/0/25832"
-                        },
-                        {
-                            "code": "25833",
-                            "name": "EUREF89 UTM sone 33, 2d",
-                            "codespace": "http://www.opengis.net/def/crs/EPSG/0/25833"
-                        }
-                    ]
-                },
-                {
-                    "name": "FGDB",
-                    "projections": [
-                        {
-                            "code": "25832",
-                            "name": "EUREF89 UTM sone 32, 2d",
-                            "codespace": "http://www.opengis.net/def/crs/EPSG/0/25832"
-                        },
-                        {
-                            "code": "25833",
-                            "name": "EUREF89 UTM sone 33, 2d",
-                            "codespace": "http://www.opengis.net/def/crs/EPSG/0/25833"
-                        }
-                    ]
-                },
-                {
-                    "name": "SOSI",
-                    "projections": [
-                        {
-                            "code": "25832",
-                            "name": "EUREF89 UTM sone 32, 2d",
-                            "codespace": "http://www.opengis.net/def/crs/EPSG/0/25832"
-                        },
-                        {
-                            "code": "25833",
-                            "name": "EUREF89 UTM sone 33, 2d",
-                            "codespace": "http://www.opengis.net/def/crs/EPSG/0/25833"
-                        }
-                    ]
-                }
-            ]
-        },
-    ],
-
-    // More uuids and their area, projections, formats
-};
+let datasetsAreaProjectionFormat = {};
 
 socket.onopen = () => {
     // TODO remove this logging
@@ -218,7 +104,7 @@ socket.onmessage = async function(event) {
                 buttons_container.classList.add('result-buttons');
 
                 // Creates the 'show dataset' button
-                if (result.hasWMS) {
+                if (result.wmsUrl) {
                     const show_button = document.createElement('div');
                     show_button.classList.add('show-dataset');
                     show_button.innerHTML = `<i class="fa-solid fa-map-location-dot show-dataset-icon"></i>
@@ -228,13 +114,16 @@ socket.onmessage = async function(event) {
                 }
 
                 // Creates the 'download dataset' button
-                if (result.hasDownload) {
+                if (result.downloadFormats.length > 0) {
                     const download_button = document.createElement('div');
                     download_button.classList.add('download-dataset');
                     download_button.innerHTML = `<i class="fa-solid fa-cloud-arrow-down download-dataset-icon"></i>
                         <span class="download-dataset-text">Last ned</span>`;
                     download_button.onclick = () => downloadDataset(result.uuid);
                     buttons_container.appendChild(download_button);
+
+                    // Adds dataset available download formats to dictionary its list has any elements
+                    datasetsAreaProjectionFormat[result.uuid] = result.downloadFormats;
                 }
 
                 // Appends the buttons container to the result div
@@ -242,6 +131,7 @@ socket.onmessage = async function(event) {
 
                 results_div.appendChild(result_div);
             });
+            console.log(`herro, here is formats dictionary: ${JSON.stringify(datasetsAreaProjectionFormat)}`);
 
             updateDownloadFormats();
             break;
@@ -398,22 +288,46 @@ function showDatasetWMS(uuid) {
 function downloadDataset(uuid) {
     console.log(`Download dataset: ${uuid}`);
     // Should be updated to include user selected area, projection, format etc
-    const area = document.getElementById('searchDownloadArea').value;
-    const projection = document.getElementById('searchDownloadProjection').value;
-    const format = document.getElementById('searchDownloadFormat').value;
-    const userGroup = "GeoGPT";//document.getElementById('searchDownloadUserGroup').value;
-    const useCase = "Beredskap";//document.getElementById('searchDownloadUseCase').value;
+    const areaName = document.getElementById('searchDownloadArea').value;
+    const projectionName = document.getElementById('searchDownloadProjection').value;
+    const formatName = document.getElementById('searchDownloadFormat').value;
+
+    const userGroup = document.getElementById('searchDownloadUserGroup').value; //"GeoGPT";
+    const usagePurpose = document.getElementById('searchDownloadUsagePurpose').value; //"Beredskap";
+
+
+    // Gets the area object for the chosen area
+    let areaObject = datasetsAreaProjectionFormat[uuid].find(area => area.name === areaName);
+    const areaCode = areaObject.code;
+    const areaType = areaObject.type;
+
+    // Gets the projection object for the chosen area
+    let projectionObject = areaObject.projections.find(projection => projection.name === projectionName);
+    const projectionCode = projectionObject.code;
+    const projectionCodespace = projectionObject.codespace;
+
+    // Checks if the standard format "FGDB" does not exist, set the standard format to the first list element
+    let formatObject = projectionObject.formats.find(format => format.name === formatName);
+    const formatCode = ""; 
+    const formatType = ""; 
+ 
 
     const message = {
         action: 'downloadDataset',
         payload: {
             uuid: uuid,
             selectedFormats: {
-                area: area,
-                projection: projection,
-                format: format,
+                areaCode: areaCode,
+                areaName: areaName,
+                areaType: areaType,
+                projectionCode: projectionCode,
+                projectionName: projectionName,
+                projectionCodespace: projectionCodespace,
+                formatCode: formatCode,
+                formatName: formatName,
+                formatType: formatType,
                 userGroup: userGroup,
-                useCase: useCase,
+                usagePurpose: usagePurpose,
             },
         },
     };

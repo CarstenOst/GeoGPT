@@ -83,15 +83,16 @@ server.on('connection', socket => {
                 const datasetUuid = data.payload.uuid;
                 const chosenFormats = data.payload.selectedFormats;
 
+
                 try {
                     // Double checks if the dataset is available for download using API
                     const isDownloadable = await datasetHasDownload(datasetUuid);
                     if (isDownloadable) {
                         // Sets download format to standard or next format by checking the downloads API
-                        const downloadFormats = await getStandardOrFirstFormat(datasetUuid);
+                        //const downloadFormats = await getStandardOrFirstFormat(datasetUuid);
 
                         // Gets the download url from the downloads API, and sends it to the client
-                        const datasetDownloadUrl =  await getDownloadUrl(datasetUuid, downloadFormats);
+                        const datasetDownloadUrl =  await getDownloadUrl(datasetUuid, chosenFormats);
                         await sendWebsocketMessage('downloadDatasetOrder', datasetDownloadUrl, socket)
                     }
                 } catch (error) {

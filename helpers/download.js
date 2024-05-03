@@ -129,10 +129,24 @@ async function getDownloadUrl(metadataUuid, downloadFormats) {
     const softwareClient = "GeoGpt"; // Software client
     const softwareClientVersion = "15.7.2602"; // Software client version
 
+    // Output the download format values
+    console.log(`The Area is set to: ${downloadFormats.areaName}`);
+    console.log(`The Area is set to: ${downloadFormats.areaCode}`);
+    console.log(`The Area is set to: ${downloadFormats.areaType}`);
+    console.log(`The Projection is set to: ${downloadFormats.projectionName}`);
+    console.log(`The Projection is set to: ${downloadFormats.projectionCode}`);
+    console.log(`The Projection is set to: ${downloadFormats.projectionCodespace}`);
+    console.log(`The Format is set to: ${downloadFormats.formatName}`);
+    console.log(`The Format is set to: ${downloadFormats.formatCode}`); // TODO possibly optional and can be removed?
+    console.log(`The Format is set to: ${downloadFormats.formatType}`); // TODO possibly optional and can be removed?
+    console.log(`The UserGroup is set to: ${downloadFormats.userGroup}`);
+    console.log(`The UsagePurpose is set to: ${downloadFormats.usagePurpose}`);
+
+
     // Download order body JSON structure
     const orderRequest = {
         email: email,
-        usageGroup: downloadFormats.usageGroup,
+        usageGroup: downloadFormats.userGroup,
         softwareClient: softwareClient,
         softwareClientVersion: softwareClientVersion,
         orderLines: [
@@ -189,13 +203,14 @@ async function getDownloadUrl(metadataUuid, downloadFormats) {
 async function getDatasetDownloadAndWmsStatus(vdbSearchResponse) {
     // Parallel async API check of all datasets downloadability, which is added to the objects
     const downloadPromises = vdbSearchResponse.map(dataset => {
-        return datasetHasDownload(dataset.uuid)
-            .then(hasDownload => {
+        return fetchAreaData(dataset.uuid)
+            .then(formatsApiResponse => {
 
+                const availableFormatsList = typeof formatsApiResponse === 'string' ? JSON.parse(formatsApiResponse) : formatsApiResponse;
                 return {
                     ...dataset,
-                    hasDownload: hasDownload,
-                    hasWMS: true // TODO this needs updating to use API check function at later date
+                    downloadFormats: availableFormatsList,
+                    wmsUrl: '' // TODO this needs updating to use API check function at later date
                 };
             });
     });
