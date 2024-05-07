@@ -68,6 +68,7 @@ async function fetch_valid_download_data_auto(uuid) {
 
         console.log(`Warn: ${key} is not available for this uuid: ${uuid}`);
     }
+    return [];
 }
 
 
