@@ -132,11 +132,11 @@ body {
     padding: 4px;
 
     position: absolute;
-    width: 300px;
+    width: 400px;
     height: 350px;
 
-    min-width: 300px;
-    min-height: 280px;
+    min-width: 400px;
+    min-height: 350px;
     max-width: 500px;
     max-height: 600px;
 
@@ -280,7 +280,12 @@ body {
 
 
 
-/* Filter dropdown */
+/* Filter and Download format dropdown menus */
+.filter-download-menus {
+    display: flex;
+    justify-content: space-between;
+}
+
 #searchFilter {
     margin: 5px;
 }
@@ -290,7 +295,7 @@ body {
     align-items: center;
     border: 1.5px solid rgb(0, 0, 0);
     border-radius: 10px;
-    padding: 3px;
+    padding: 8px;
 }
 
 .filter-input {
@@ -300,7 +305,7 @@ body {
 .dropdown {
 }
 
-.dropdown-content {
+.filter-dropdown-content {
     display: none;
     position: absolute;
     background-color: #FFFFFF;
@@ -320,6 +325,35 @@ body {
     background-color: #0066B2;
 }
 
+
+/* vdb download formats menu */
+.vdb-formats-dropdown {
+    position: relative;
+    display: inline-block;
+}
+.dropdown-content form {
+    padding: 12px;
+}
+.download-dropdown-trigger {
+    height: 100%;
+    cursor: pointer;
+    background-color: #0066B2;
+    padding: 8px;
+    color: white;
+    font-weight: bold;
+    border: 1.5px solid #0066B2;
+}
+
+
+.download-dropdown-content {
+    right: 0;
+    min-width: 400px;
+    display: none;
+    position: absolute;
+    background-color: #FFFFFF;
+    overflow-y: auto;
+    z-index: 1;
+}
 
 
 

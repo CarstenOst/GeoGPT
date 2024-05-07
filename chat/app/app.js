@@ -207,6 +207,16 @@ function filterFunction() {
 
 
 
+// Styling for the download formats dropdown menu
+document.querySelector('.download-dropdown-trigger').addEventListener('click', function() {
+    var dropdownContent = this.nextElementSibling;
+    if (dropdownContent.style.display === 'block') {
+        dropdownContent.style.display = 'none';
+    } else {
+        dropdownContent.style.display = 'block';
+    }
+});
+
 
 // This needs to be performed after searches as well, so that the list is updated
 document.addEventListener('DOMContentLoaded', function() {
