@@ -48,6 +48,7 @@ server.on('connection', socket => {
                 } catch (error) {
                     // If the chat for some reason fails to complete. It outputs error message, and tries to reset chat submit form
                     console.log(`Server controller failed to send user message, retrieval of VDB results or RAG response stream: ${error}`);
+                    console.log(`Server controller User message, VDB retrieval, RAG response stack trace: ${error.stack}`);
                     await sendWebsocketAction('streamComplete', socket);
                 }
                 
@@ -61,12 +62,13 @@ server.on('connection', socket => {
                     const datasetsWithDownloadAndWmsStatus = await getDatasetDownloadAndWmsStatus(vdbSearchResponse);
 
                     //console.log(`Vector database results:\n${Object.keys(vdbSearchResponse[0])}\n\n${Object.values(vdbSearchResponse[0])}`);
-                    console.log(`Vector database results:\n${Object.keys(datasetsWithDownloadAndWmsStatus[0])}\n\n${Object.values(datasetsWithDownloadAndWmsStatus[0])}`);
+                    //console.log(`Vector database results:\n${Object.keys(datasetsWithDownloadAndWmsStatus[0])}\n\n${Object.values(datasetsWithDownloadAndWmsStatus[0])}`);
 
                     // Sends the VDB results to the client for display over the socket
                     await sendWebsocketMessage('searchVdbResults', datasetsWithDownloadAndWmsStatus, socket);
                 } catch (error) {
-                    console.log(`Server controller failed to get the VDB results, or send them to the client: ${error}`);
+                    console.log(`Server controller failed to get the VDB results, or send them to the client: ${error.message}`);
+                    console.log(`Server controller VDB stack trace: ${error.stack}`);
                 }
                 break;
             
@@ -76,6 +78,7 @@ server.on('connection', socket => {
                     
                 } catch (error) {
                     console.log(`Server controller failed to show the Dataset using its WMS: ${error}`);
+                    console.log(`Server controller WMS stack trace: ${error.stack}`);
                 }
                 break;
 
@@ -97,12 +100,14 @@ server.on('connection', socket => {
                     }
                 } catch (error) {
                     console.log(`Server controller failed to start download of dataset: ${error}`);
+                    console.log(`Server controller start download stack trace: ${error.stack}`);
                 }
                 
                 break;
         
             default:
                 console.log(`Server controller received an invalid server action. Action: ${data.action}.`)
+                console.log(`Server controller start download stack trace: ${error.stack}`);
                 break;
         }
 
