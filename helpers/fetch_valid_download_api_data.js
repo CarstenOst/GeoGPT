@@ -1,3 +1,8 @@
+
+// NB! currently not in use, as API V1 was chosen over support of both API versions with different formatting
+// NB! currently not in use, as API V1 was chosen over support of both API versions with different formatting
+// NB! currently not in use, as API V1 was chosen over support of both API versions with different formatting
+
 // Require node-fetch
 const fetch = require('node-fetch');
 

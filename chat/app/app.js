@@ -131,7 +131,6 @@ socket.onmessage = async function(event) {
 
                 results_div.appendChild(result_div);
             });
-            console.log(`herro, here is formats dictionary: ${JSON.stringify(datasetsAreaProjectionFormat)}`);
 
             updateDownloadFormats();
             break;
@@ -150,6 +149,7 @@ socket.onerror = (error) => {
     // TODO remove this logging
     console.error('WebSocket error:', error);
 };
+
 
 // Listen for chat form submit
 document.getElementById('chatForm').addEventListener('submit', function(event) {
@@ -231,9 +231,10 @@ function updateDownloadFormats () {
             // Find if there is a match for area, projection, and format (it can be downloaded with selected options)
             const isSupported = dataset.some(area => {
                 const areaMatch = area.name === selectedArea;
-                const projectionMatch = area.projections.some(proj => 
-                    proj.name === selectedProjection && proj.formats.some(fmt => fmt.name === selectedFormat));
-                return areaMatch && projectionMatch;
+                const projectionAndFormatMatch = area.projections.some(proj => 
+                    proj.name === selectedProjection && proj.formats.some(fmt => fmt.name === selectedFormat)
+                );
+                return areaMatch && projectionAndFormatMatch;
             });
 
             // Adds or removes alert icon based on if the dataset can be downloaded, or is not supported in the selected formatting
@@ -290,10 +291,10 @@ function downloadDataset(uuid) {
     // Should be updated to include user selected area, projection, format etc
     const areaName = document.getElementById('searchDownloadArea').value;
     const projectionName = document.getElementById('searchDownloadProjection').value;
-    const formatName = document.getElementById('searchDownloadFormat').value;
+    const selectedFormatName = document.getElementById('searchDownloadFormat').value;
 
-    const userGroup = document.getElementById('searchDownloadUserGroup').value; //"GeoGPT";
-    const usagePurpose = document.getElementById('searchDownloadUsagePurpose').value; //"Beredskap";
+    const selectedUserGroup = document.getElementById('searchDownloadUserGroup').value;
+    const selectedUsagePurpose = document.getElementById('searchDownloadUsagePurpose').value;
 
 
     // Gets the area object for the chosen area
@@ -307,7 +308,8 @@ function downloadDataset(uuid) {
     const projectionCodespace = projectionObject.codespace;
 
     // Checks if the standard format "FGDB" does not exist, set the standard format to the first list element
-    let formatObject = projectionObject.formats.find(format => format.name === formatName);
+    let formatObject = projectionObject.formats.find(format => format.name === selectedFormatName);
+    const formatName = formatObject.name;
     const formatCode = ""; 
     const formatType = ""; 
  
@@ -326,8 +328,8 @@ function downloadDataset(uuid) {
                 formatCode: formatCode,
                 formatName: formatName,
                 formatType: formatType,
-                userGroup: userGroup,
-                usagePurpose: usagePurpose,
+                userGroup: selectedUserGroup,
+                usagePurpose: selectedUsagePurpose,
             },
         },
     };

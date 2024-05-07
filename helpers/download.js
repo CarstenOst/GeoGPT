@@ -1,6 +1,7 @@
 // Require node-fetch
 const fetch = require('node-fetch');
 
+
 async function fetchAreaData(uuid) {
   // Construct the URL with the provided UUID
   const url = `https://nedlasting.geonorge.no/api/codelists/area/${uuid}`;
@@ -16,8 +17,7 @@ async function fetchAreaData(uuid) {
 
     // Checks is API response is html page for login (dataset requires login)
     if (response.url.includes('https://auth2.geoid.no')) {
-        console.log(`API response is HTML login page: ${uuid})}`);
-        console.log(`API response is HTML login page: ${response.url})}`);
+        console.log(`Dataset requires authentication, API response is HTML login page. Uuid: ${uuid})}`);
         return [];
     }
 
@@ -204,14 +204,14 @@ async function getDatasetDownloadAndWmsStatus(vdbSearchResponse) {
     // Parallel async API check of all datasets downloadability, which is added to the objects
     const downloadPromises = vdbSearchResponse.map(dataset => {
         return fetchAreaData(dataset.uuid)
-            .then(formatsApiResponse => {
+            .then(formatsApiResponseList => {
 
-                const availableFormatsList = typeof formatsApiResponse === 'string' ? JSON.parse(formatsApiResponse) : formatsApiResponse;
                 return {
                     ...dataset,
-                    downloadFormats: availableFormatsList,
-                    wmsUrl: '' // TODO this needs updating to use API check function at later date
+                    downloadFormats: formatsApiResponseList,
+                    wmsUrl: true // TODO this needs updating to use API check function at later date
                 };
+
             });
     });
 
