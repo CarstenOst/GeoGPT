@@ -251,8 +251,13 @@ body {
 }
 
 /* Search formatting form */
-.vector-search-form-field {
+.download-format-form-field {
     display: flex;
+    justify-content: space-between;
+    padding: 5px;
+    background-color: #0066B2;
+    color: #FFFFFF;
+    border-bottom: 1px solid black;
 }
 
 
