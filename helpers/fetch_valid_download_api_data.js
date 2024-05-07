@@ -134,4 +134,4 @@ function convertV1toV2(jsonData) {
 }
 
 
-module.exports = {fetch_valid_download_data_auto}
+module.exports = {fetch_valid_download_data_auto, ERROR_MESSAGE}
