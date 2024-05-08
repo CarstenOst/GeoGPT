@@ -17,7 +17,10 @@ function connectClient() {
   if (!connected) {
     client.connect(err => {
       if (err) {
-        console.error('connection error', err.stack);
+        console.log("Connection failed to the database");
+        console.log("Please remember to make sure your database connection setup is correct");
+        //console.error('connection error', err.stack);
+        process.exit();
       } else {
         console.log('connected to postgres');
         connected = true;

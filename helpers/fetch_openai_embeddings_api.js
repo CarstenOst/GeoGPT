@@ -6,7 +6,7 @@ const fs = require('fs');
 
 
 const fetchOpenAIEmbeddings = async (inputText) => {
-  appendToCsv(inputText);
+  //appendToCsv(inputText);
   const response = await fetch('https://api.openai.com/v1/embeddings', {
     method: 'POST',
     headers: {

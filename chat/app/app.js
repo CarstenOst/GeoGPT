@@ -6,6 +6,11 @@ let chatMessageId = 0;
 let currentSystemMessageDiv = null;
 let currentUserMessageDiv = null;
 
+
+// This starts off as empty, which is then updated on vector database searches to include the downloadable datasets available area, projection, format, 
+// so that their download icons show if it's supported, or need selection of supported formatting
+let datasetsAreaProjectionFormat = {};
+
 socket.onopen = () => {
     // TODO remove this logging
     console.log('WebSocket connection established');
@@ -21,11 +26,11 @@ socket.onmessage = async function(event) {
                 // Creates new div for the incoming user message
                 currentUserMessageDiv = document.createElement('div');
 
-                // Adds id, class, and appends it to 'results' div
+                // Adds id, class, and appends it to 'chatMessages' div
                 currentUserMessageDiv.id = `message-${chatMessageId}`;
                 currentUserMessageDiv.classList.add('user-message');
                 currentUserMessageDiv.innerHTML += message.payload;
-                document.getElementById('results').appendChild(currentUserMessageDiv);
+                document.getElementById('chatMessages').appendChild(currentUserMessageDiv);
 
                 // Incremets message id right after response received
                 chatMessageId += 1;
@@ -37,10 +42,10 @@ socket.onmessage = async function(event) {
                 // Create a new div element for the incoming system message (also updates reference to the div the stream should be sendt to)
                 currentSystemMessageDiv = document.createElement('div');
 
-                // Adds id, class, and appends it to 'results' div
+                // Adds id, class, and appends it to 'chatMessages' div
                 currentSystemMessageDiv.id = `message-${chatMessageId}`;
                 currentSystemMessageDiv.classList.add('system-message');
-                document.getElementById('results').appendChild(currentSystemMessageDiv);
+                document.getElementById('chatMessages').appendChild(currentSystemMessageDiv);
 
                 // Incremets message id right after response received
                 chatMessageId += 1;
@@ -50,42 +55,88 @@ socket.onmessage = async function(event) {
             if (currentSystemMessageDiv) {
                 currentSystemMessageDiv.innerHTML += message.payload;
             }
+
+            // Formats new message payload from markdown into html
+            //customMarkdownConversion(currentSystemMessageDiv.id);
             break;
 
-        case "chatVdbResults":
-            let results = message.payload;
+        case "streamComplete":
+            // Reactivates the submit button
+            document.getElementById('chatSubmitButton').disabled = false;
+            document.getElementById('chatSubmitButton').className = 'message-button';
+            break;
 
-            const view_results = results.map((result) => ({
+        case "insertImage":
+            // Formats new message markdown contents into html
+            customMarkdownImageConversion(currentSystemMessageDiv.id, message.payload.datasetImageUrl, message.payload.datasetDownloadUrl);
+            break;
+        
+        case "formatMarkdown":
+            // Formats new message markdown contents into html
+            customMarkdownConversion(currentSystemMessageDiv.id);
+            break;
+
+        case "searchVdbResults":
+            const results_div = document.getElementById('results');
+            let results = message.payload;
+            // TODO add dynamic check for boolean value weather download and view icon buttons should or should not be shown
+             const view_results = results.map((result) => ({
                 ...result,
                 url: `https://kartkatalog.geonorge.no/metadata/${result.title}/${result.uuid}`,
             }));
 
-            const results_div = document.getElementById('results');
-
             view_results.forEach((result) => {
+                // Creates new result item with child elements
                 const result_div = document.createElement('div');
-                result_div.classList.add('result-item'); // Add class 'result-item' to the div
+                result_div.classList.add('result-item');
+                result_div.setAttribute('dataset-uuid', result.uuid);
 
-                const title_h3 = document.createElement('h3');
-                title_h3.textContent = result.title; // Set the title text
-                result_div.appendChild(title_h3); // Append the title to the result div
 
-                const distance_p = document.createElement('p');
-                distance_p.textContent = `Distance: ${result.distance}`; // Set the distance text
-                result_div.appendChild(distance_p); // Append the distance to the result div
+                // Adds title with dataset link
+                const title_link = document.createElement('a');
+                title_link.textContent = result.title;
+                title_link.href = result.url;
+                title_link.target = '_blank';
+                result_div.appendChild(title_link);
 
-                const metadata_a = document.createElement('a');
-                metadata_a.href = result.url; // Set the URL for the metadata link
-                metadata_a.target = '_blank'; // Open in a new tab
-                metadata_a.textContent = 'View Metadata'; // Set the text for the metadata link
-                result_div.appendChild(metadata_a); // Append the metadata link to the result div
+                // Creates div containing
+                const buttons_container = document.createElement('div');
+                buttons_container.classList.add('result-buttons');
 
-                results_div.appendChild(result_div); // Append the result div to the results container
+                // Creates the 'show dataset' button
+                if (result.wmsUrl) {
+                    const show_button = document.createElement('div');
+                    show_button.classList.add('show-dataset');
+                    show_button.innerHTML = `<i class="fa-solid fa-map-location-dot show-dataset-icon"></i>
+                        <span class="show-dataset-text">Vis</span>`;
+                    show_button.onclick = () => showDatasetWMS(result.uuid);
+                    buttons_container.appendChild(show_button);
+                }
+
+                // Creates the 'download dataset' button
+                if (result.downloadFormats.length > 0) {
+                    const download_button = document.createElement('div');
+                    download_button.classList.add('download-dataset');
+                    download_button.innerHTML = `<i class="fa-solid fa-cloud-arrow-down download-dataset-icon"></i>
+                        <span class="download-dataset-text">Last ned</span>`;
+                    download_button.onclick = () => downloadDataset(result.uuid);
+                    buttons_container.appendChild(download_button);
+
+                    // Adds dataset available download formats to dictionary its list has any elements
+                    datasetsAreaProjectionFormat[result.uuid] = result.downloadFormats;
+                }
+
+                // Appends the buttons container to the result div
+                result_div.appendChild(buttons_container);
+
+                results_div.appendChild(result_div);
             });
 
-            // Reactivates the submit button
-            document.getElementById('submitButton').disabled = false;
-            document.getElementById('submitButton').className = 'message-button';
+            updateDownloadFormats();
+            break;
+
+        case "downloadDatasetOrder":
+            window.open(message.payload, '_blank');
             break;
 
         default:
@@ -99,18 +150,333 @@ socket.onerror = (error) => {
     console.error('WebSocket error:', error);
 };
 
-// Listen for form submit instead of button click
-document.getElementById('searchform').addEventListener('submit', function(event) {
+
+// Listen for chat form submit
+document.getElementById('chatForm').addEventListener('submit', function(event) {
     // Prevent the default form submission and resubmission
     event.preventDefault(); 
-    document.getElementById('submitButton').disabled = true;
-    document.getElementById('submitButton').className = 'disabled-button';
+    document.getElementById('chatSubmitButton').disabled = true;
+    document.getElementById('chatSubmitButton').className = 'disabled-button';
     const message = {
-        action : 'formSubmit',
-        payload : document.getElementById('searchInput').value,
+        action : 'chatFormSubmit',
+        payload : document.getElementById('chatInput').value,
     }
     
     // Send the message from the input field, and clears it
     socket.send(JSON.stringify(message)); 
-    document.getElementById('searchInput').value = '';
+    document.getElementById('chatInput').value = '';
 });
+
+
+// Listen for search form submit
+document.getElementById('searchForm').addEventListener('submit', function(event) {
+    // Prevent the default form submission and clears previous search results
+    event.preventDefault(); 
+    // Send the message from the input field, and clears the results
+    document.getElementById('results').innerHTML = '';
+    const message = {
+        action : 'searchFormSubmit',
+        payload : document.getElementById('searchInput').value,
+    }
+    
+    socket.send(JSON.stringify(message)); 
+});
+
+// Function for dynamically displaying filters on search
+function filterFunction() {
+    var input, filter, div, a, i;
+    input = document.getElementById("searchFilter");
+    filter = input.value.toUpperCase();
+    div = document.getElementById("filterDropdown");
+    a = div.getElementsByTagName("a");
+    let isInputEmpty = input.value.trim() === '';
+
+    // If there's no input, hide all links. Otherwise, follow the existing show/hide logic.
+    for (i = 0; i < a.length; i++) {
+        if (isInputEmpty) {
+        a[i].style.display = "none";
+        } else {
+        let txtValue = a[i].textContent || a[i].innerText;
+        a[i].style.display = txtValue.toUpperCase().indexOf(filter) > -1 ? "" : "none";
+        }
+    }
+
+    // Show the dropdown content when there's input, hide it when there's none.
+    div.style.display = isInputEmpty ? "none" : "block";
+}
+
+
+
+// Styling for the download formats dropdown menu
+document.querySelector('.download-dropdown-trigger').addEventListener('click', function() {
+    var dropdownContent = this.nextElementSibling;
+    if (dropdownContent.style.display === 'block') {
+        dropdownContent.style.display = 'none';
+    } else {
+        dropdownContent.style.display = 'block';
+    }
+});
+
+
+// This needs to be performed after searches as well, so that the list is updated
+document.addEventListener('DOMContentLoaded', function() {
+    document.getElementById('vdbResultsDownloadFormats').addEventListener('change', function(event) {
+        updateDownloadFormats();
+    });
+});
+
+function updateDownloadFormats () {
+    // Gets formating form field values
+    const selectedArea = document.getElementById('searchDownloadArea').value;
+    const selectedProjection = document.getElementById('searchDownloadProjection').value;
+    const selectedFormat = document.getElementById('searchDownloadFormat').value;
+
+    // Iterate over result items to check if they should be updated
+    document.querySelectorAll('.result-item').forEach(resultItem => {
+        const uuid = resultItem.getAttribute('dataset-uuid');
+        const dataset = datasetsAreaProjectionFormat[uuid];
+
+        // Checks if the result item is in datasetsAreaProjectionFormat (is downloadable), and thus require it to be updated on area, projection and format changes
+        if (dataset) {
+            // Find if there is a match for area, projection, and format (it can be downloaded with selected options)
+            const isSupported = dataset.some(area => {
+                const areaMatch = area.name === selectedArea;
+                const projectionAndFormatMatch = area.projections.some(proj => 
+                    proj.name === selectedProjection && proj.formats.some(fmt => fmt.name === selectedFormat)
+                );
+                return areaMatch && projectionAndFormatMatch;
+            });
+
+            // Adds or removes alert icon based on if the dataset can be downloaded, or is not supported in the selected formatting
+            updateDownloadAlertIcon(resultItem, isSupported);
+        }
+    });
+}
+
+function updateDownloadAlertIcon(element, isSupported) {
+    // Gets the area with show and download icons
+    const downloadSection = element.querySelector('.download-dataset');
+    let icon = downloadSection.querySelector('.extra-icon');
+
+    // Updates to include/remove alert icon based on if the formatting is supported or not for the dataset
+    if (!isSupported) {
+        // Add the icon if it's not already there
+        if (!icon) {
+            icon = document.createElement('i');
+            icon.className = 'fa-solid fa-exclamation-circle extra-icon';
+            downloadSection.appendChild(icon);
+
+            downloadSection.onclick = () => openModalDownloadFormats();
+        }
+    } else {
+        // Remove the icon if it exists
+        if (icon) {
+            const uuid = element.getAttribute('dataset-uuid');
+            console.log(`Added download function with uuid: ${uuid}`);
+            icon.remove();
+            // Adds back the 
+            downloadSection.onclick = () => downloadDataset(uuid);
+        }
+    }
+}
+
+function openModalDownloadFormats() {
+    alert("Dette datasettet er ikke tilgjengelig i denne formateringen.");
+}
+
+
+// Function that updates map WMS
+function showDatasetWMS(uuid) {
+    console.log(`Show dataset: ${uuid}`);
+    const message = {
+        action: 'showDataset',
+        payload: uuid
+    };
+    socket.send(JSON.stringify(message));
+}
+
+// Function that starts download action
+function downloadDataset(uuid) {
+    console.log(`Download dataset: ${uuid}`);
+    // Should be updated to include user selected area, projection, format etc
+    const areaName = document.getElementById('searchDownloadArea').value;
+    const projectionName = document.getElementById('searchDownloadProjection').value;
+    const selectedFormatName = document.getElementById('searchDownloadFormat').value;
+
+    const selectedUserGroup = document.getElementById('searchDownloadUserGroup').value;
+    const selectedUsagePurpose = document.getElementById('searchDownloadUsagePurpose').value;
+
+
+    // Gets the area object for the chosen area
+    let areaObject = datasetsAreaProjectionFormat[uuid].find(area => area.name === areaName);
+    const areaCode = areaObject.code;
+    const areaType = areaObject.type;
+
+    // Gets the projection object for the chosen area
+    let projectionObject = areaObject.projections.find(projection => projection.name === projectionName);
+    const projectionCode = projectionObject.code;
+    const projectionCodespace = projectionObject.codespace;
+
+    // Checks if the standard format "FGDB" does not exist, set the standard format to the first list element
+    let formatObject = projectionObject.formats.find(format => format.name === selectedFormatName);
+    const formatName = formatObject.name;
+    const formatCode = ""; 
+    const formatType = ""; 
+ 
+
+    const message = {
+        action: 'downloadDataset',
+        payload: {
+            uuid: uuid,
+            selectedFormats: {
+                areaCode: areaCode,
+                areaName: areaName,
+                areaType: areaType,
+                projectionCode: projectionCode,
+                projectionName: projectionName,
+                projectionCodespace: projectionCodespace,
+                formatCode: formatCode,
+                formatName: formatName,
+                formatType: formatType,
+                userGroup: selectedUserGroup,
+                usagePurpose: selectedUsagePurpose,
+            },
+        },
+    };
+    socket.send(JSON.stringify(message));
+}
+
+
+
+
+
+// Markdown formatting function
+function customMarkdownImageConversion(elementId, imageUrl, downloadUrl) {
+    var element = document.getElementById(elementId);
+    if (!element) return;
+
+    // Sets download icon to insert empty if dataset has no download option, otherwise updates with icon
+    let downloadIcon = ``;
+    if (downloadUrl != false) {
+        downloadIcon = `
+            <a href="${downloadUrl}" target="_blank">
+                <div class="download-card-button">
+                    <i class="fa-solid fa-cloud-arrow-down card-icon"></i>Last ned
+                </div> 
+            </a>
+        `;
+    }
+    let htmlContent = element.innerHTML;
+
+    // TODO replace the <a> download link to be when the button is clicked on the client side, to submit with uuid from icon, and selected formatting options
+    // Html with image and formatting UI
+    let replacementHtml = `
+        <div class="card-image-container"> 
+            <img src="${imageUrl}" alt="Bilde" width="100%"/> 
+            <div class="show-card-button">
+                <i class="fa-solid fa-map-location-dot card-icon"></i>Vis
+            </div> 
+            <a href="${downloadUrl}" target="_blank">
+                <div class="download-card-button">
+                    <i class="fa-solid fa-cloud-arrow-down card-icon"></i>Last ned
+                </div> 
+            </a>
+        </div>
+        <div>
+            <form>
+            </form>
+        </div>
+        `;
+        /*
+        Should be added above
+        <div class="formats-dropdown">
+            Format dropdown here
+        </div>
+        */
+    htmlContent = htmlContent.replace(/\[bilde\]/g, replacementHtml);
+
+    element.innerHTML = htmlContent;
+}
+
+// Formats the message markdown into html after stream is complete
+function customMarkdownConversion(elementId) {
+    var element = document.getElementById(elementId);
+    if (element) {
+        let htmlContent = element.innerHTML;
+
+        // Headers
+        //htmlContent = htmlContent.replace(/^# (.*$)/gim, '<h1>$1</h1>');
+        //htmlContent = htmlContent.replace(/^## (.*$)/gim, '<h2>$1</h2>');
+        //htmlContent = htmlContent.replace(/^### (.*$)/gim, '<h3>$1</h3>');
+        //htmlContent = htmlContent.replace(/^#### (.*$)/gim, '<h4>$1</h4>');
+        //htmlContent = htmlContent.replace(/^##### (.*$)/gim, '<h5>$1</h5>');
+        //htmlContent = htmlContent.replace(/^###### (.*$)/gim, '<h6>$1</h6>');
+
+        htmlContent = htmlContent.replace(/\*\*\*(.*?)\*\*\*/g, '<strong><em>$1</em></strong>');
+
+        // Bold
+        htmlContent = htmlContent.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+
+        // Italic
+        htmlContent = htmlContent.replace(/\*(.*?)\*/g, '<em>$1</em>');
+
+        // Strikethrough
+        htmlContent = htmlContent.replace(/~~(.*?)~~/g, '<del>$1</del>');
+
+        // Blockquotes
+        htmlContent = htmlContent.replace(/^> (.*$)/gim, '<blockquote>$1</blockquote>');
+
+        // Inline Code
+        htmlContent = htmlContent.replace(/`(.*?)`/g, '<code>$1</code>');
+
+        // Links
+        //htmlContent = htmlContent.replace(/\[([^\]]+)]\(([^)]+)\)/g, '<a href="$2">$1</a>');
+
+        // Horizontal Rules
+        htmlContent = htmlContent.replace(/^(-{3,}|\*{3,}|_{3,})$/gim, '<hr />');
+
+        // Unordered Lists (simple conversion, not handling nested lists)
+        htmlContent = htmlContent.replace(/^\+ (.*$)/gim, '<ul>\n<li>$1</li>\n</ul>');
+        htmlContent = htmlContent.replace(/^\* (.*$)/gim, '<ul>\n<li>$1</li>\n</ul>');
+        htmlContent = htmlContent.replace(/^- (.*$)/gim, '<ul>\n<li>$1</li>\n</ul>');
+
+        // Ordered Lists (simple conversion, not handling nested lists)
+        htmlContent = htmlContent.replace(/^\d+\. (.*$)/gim, '<ol>\n<li>$1</li>\n</ol>');
+
+        element.innerHTML = htmlContent;
+    }
+}
+
+
+
+// Makes the chat and search containers dragable and resizable
+$(document).ready(function() {
+    $("#resizeChatDiv").draggable({
+        handle: ".chat-drag-handle",
+        containment: "window",
+
+        // Makes the active card be on top
+        start: function() {
+            $(this).css("z-index", 2);
+            $("#resizeSearchDiv").css("z-index", 1);
+        }
+    }).resizable();
+});
+
+$(document).ready(function() {
+    $("#resizeSearchDiv").draggable({
+        handle: ".search-drag-handle",
+        containment: "window",
+
+        // Makes the active card be on top
+        start: function() {
+            $(this).css("z-index", 2);
+            $("#resizeChatDiv").css("z-index", 1);
+        }
+    }).resizable();
+});
+
+
+
+
+
