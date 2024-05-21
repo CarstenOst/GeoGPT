@@ -83,7 +83,7 @@ async function getRagResponse(userQuestion, memory, ragContext, socket) {
 async function insertImageRagResponse(fullRagResponse, vdbResponse, socket) {
     // Checks if image should be inserted in response
     const datasetImageAndDownload = await checkImageSignal(fullRagResponse, vdbResponse);
-    if (datasetImageAndDownload != false) {
+    if (datasetImageAndDownload !== false) {
         // Sends message to insert image in GPT response
         const insertImage = {
             action: 'insertImage',
@@ -100,7 +100,7 @@ async function insertImageRagResponse(fullRagResponse, vdbResponse, socket) {
 
 // Markdown formatting function
 async function checkImageSignal(gptResponse, metadataContextList) {
-    // Gets image url for datset if in GPT response
+    // Gets image url for dataset if in GPT response
     let datasetUuid = '';
     let datasetImageUrl = false;
     let datasetDownloadUrl = false;
