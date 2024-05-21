@@ -76,6 +76,41 @@ async function fetch_valid_download_data_auto(uuid) {
     return [];
 }
 
+async function fetch_get_data_api(uuid) {
+    let url = `https://kartkatalog.geonorge.no/api/getdata/${uuid}`
+
+    try {
+        const response = await fetch(url);
+        // Handle non-200 responses
+        if (response.status === 404) {
+            return []; // Could mean that the API was not correct
+        }
+        if (!response.ok) {
+            console.error(`HTTP error! status: ${response.status}`);
+            // throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        return await response.json(); // TODO make additional checks so this wont ever crash
+    } catch (error) {
+        console.error(`Error fetching wms-data for ${uuid}`, error);
+    }
+}
+
+/**
+ * Get the wms url
+ * @param uuid
+ * @returns {Promise<*|string>} string 'None' if none was found, else ready wms url
+ */
+async function get_wms(uuid) {
+    let raw = await fetch_get_data_api(uuid)
+    try {
+        return raw.Distributions.RelatedViewServices[0].MapUrl;
+    }
+    catch (e) {
+        return 'None'
+    }
+
+}
+//get_wms("3de4ddf6-d6b8-4398-8222-f5c47791a757").then(r => console.log(r)) //checking that it works (which it does for kvikkleire, and losmasse)
 
 // Example usage
 // API_V1 uuid a29b905c-6aaa-4283-ae2c-d167624c08a8 ("kvikkleire")
@@ -139,4 +174,4 @@ function convertV1toV2(jsonData) {
 }
 
 
-module.exports = {fetch_valid_download_data_auto, ERROR_MESSAGE}
+module.exports = {fetch_valid_download_data_auto, ERROR_MESSAGE, get_wms}
