@@ -87,15 +87,15 @@ socket.onmessage = async function (event) {
                 console.log("The app says hasWmsUrl is: " + hasWmsUrl)
                 let buttonsHTML = '';
                 if (hasWmsUrl !== 'None') {
-                    buttonsHTML += `<div class="show-dataset" data-uuid="${result.uuid}" data-type="show">
-            <i class="fa-solid fa-map-location-dot show-dataset-icon" onclick="replaceIframe('${hasWmsUrl}')"></i>
+                    buttonsHTML += `<div class="show-dataset pointer" data-uuid="${result.uuid}" data-type="show" onclick="replaceIframe('${hasWmsUrl}')">
+            <i class="fa-solid fa-map-location-dot show-dataset-icon pointer"></i>
             <span class="show-dataset-text">Vis</span>
         </div>`;
                 }
 
                 if (hasDownloads) {
                     buttonsHTML += `<div class="download-dataset" data-uuid="${result.uuid}" data-type="download">
-            <i class="fa-solid fa-cloud-arrow-down download-dataset-icon"></i>
+            <i class="fa-solid fa-cloud-arrow-down download-dataset-icon pointer"></i>
             <span class="download-dataset-text">Last ned</span>
         </div>`;
                 }
@@ -149,37 +149,6 @@ socket.onerror = (error) => {
 };
 
 
-// Listen for chat form submit
-document.getElementById('chatForm').addEventListener('submit', function (event) {
-    // Prevent the default form submission and resubmission
-    event.preventDefault();
-    document.getElementById('chatSubmitButton').disabled = true;
-    document.getElementById('chatSubmitButton').className = 'disabled-button';
-    const message = {
-        action: 'chatFormSubmit',
-        payload: document.getElementById('chatInput').value,
-    }
-
-    // Send the message from the input field, and clears it
-    socket.send(JSON.stringify(message));
-    document.getElementById('chatInput').value = '';
-});
-
-
-// Listen for search form submit
-document.getElementById('searchForm').addEventListener('submit', function (event) {
-    // Prevent the default form submission and clears previous search results
-    event.preventDefault();
-    // Send the message from the input field, and clears the results
-    document.getElementById('results').innerHTML = '';
-    const message = {
-        action: 'searchFormSubmit',
-        payload: document.getElementById('searchInput').value,
-    }
-
-    socket.send(JSON.stringify(message));
-});
-
 // Function for dynamically displaying filters on search
 function filterFunction() {
     let input, filter, div, a, i;
@@ -202,25 +171,6 @@ function filterFunction() {
     // Show the dropdown content when there's input, hide it when there's none.
     div.style.display = isInputEmpty ? "none" : "block";
 }
-
-
-// Styling for the download formats dropdown menu
-document.querySelector('.download-dropdown-trigger').addEventListener('click', function () {
-    let dropdownContent = this.nextElementSibling;
-    if (dropdownContent.style.display === 'block') {
-        dropdownContent.style.display = 'none';
-    } else {
-        dropdownContent.style.display = 'block';
-    }
-});
-
-
-// This needs to be performed after searches as well, so that the list is updated
-document.addEventListener('DOMContentLoaded', function () { // Todo fix: Event parameter is unused
-    document.getElementById('vdbResultsDownloadFormats').addEventListener('change', function (event) {
-        updateDownloadFormats();
-    });
-});
 
 function updateDownloadFormats() {
     // Gets formating form field values
@@ -285,7 +235,6 @@ function openModalDownloadFormats() {
 // Function that updates map WMS
 async function showDatasetWMS(uuid) {
     console.log(`Show dataset: ${uuid}`);
-    //get_wms(uuid).then(x => replaceIframe(x))
 
     const message = {
         action: 'showDataset',
