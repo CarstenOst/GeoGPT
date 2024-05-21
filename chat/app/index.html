@@ -188,8 +188,8 @@
                     </a>
                     <div class="result-buttons">
                         <div class="show-dataset">
-                            <i class="fa-solid fa-map-location-dot show-dataset-icon"></i>
-                            <span class="show-dataset-text">
+                            <i class="fa-solid fa-map-location-dot show-dataset-icon" onclick="replaceIframe('https://norgeskart.no/geoportal/#!?zoom=4.6366666666666685&lon=168670.22&lat=6789452.95&wms=https:%2F%2Fnve.geodataonline.no%2Farcgis%2Fservices%2FSkredKvikkleire2%2FMapServer%2FWMSServer&project=geonorge&layers=1002')"></i>
+                            <span class="show-dataset-text" >
                                 Vis
                             </span>
                         </div>
@@ -253,5 +253,45 @@
         </div>
         </div>
     </body>
+<script>
+    function replaceIframe(newUrl, avoidCache = false) {
+        // Select the existing iframe
+        const iframe = document.getElementById('iframe-map');
+
+        if (iframe) {
+            // Temporarily set src to about:blank to ensure the iframe reloads
+            iframe.src = 'about:blank';
+
+            // Allow a slight delay for the iframe to clear
+            setTimeout(() => {
+                // Hardcoded base URL with the specific parameters for zoom, longitude, and latitude
+                let baseUrl = 'https://norgeskart.no/geoportal/?zoom=null#!?zoom=4.6366666666666685&lon=168670.22&lat=6789452.95&wms=';
+
+                // Extract the part after 'wms=' from the new URL
+                let wmsValue = newUrl.substring(newUrl.indexOf("wms=") + 4);
+
+                // Construct the full new URL
+                let fullNewUrl = baseUrl + wmsValue;
+
+                if (avoidCache) {
+                    const cacheBuster = '&_=' + new Date().getTime();
+                    fullNewUrl += cacheBuster;
+                }
+
+                // Update the iframe's source to the new URL
+                iframe.src = fullNewUrl;
+            }, 0); // Delay of 10 milliseconds
+        }
+    }
+
+    // The remaining jQuery code for draggable and resizable elements remains unchanged.
+
+
+    // Remaining jQuery code for draggable and resizable elements remains unchanged.
+
+</script>
 
 </html>
+
+
+
