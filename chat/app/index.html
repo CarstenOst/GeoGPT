@@ -241,11 +241,32 @@
         socket.send(JSON.stringify(message));
     });
 
-    // The remaining jQuery code for draggable and resizable elements remains unchanged.
+    // Makes the chat and search containers dragable and resizable
+    $(document).ready(function() {
+        $("#resizeChatDiv").draggable({
+            handle: ".chat-drag-handle",
+            containment: "window",
 
+            // Makes the active card be on top
+            start: function() {
+                $(this).css("z-index", 2);
+                $("#resizeSearchDiv").css("z-index", 1);
+            }
+        }).resizable();
+    });
 
-    // Remaining jQuery code for draggable and resizable elements remains unchanged.
+    $(document).ready(function() {
+        $("#resizeSearchDiv").draggable({
+            handle: ".search-drag-handle",
+            containment: "window",
 
+            // Makes the active card be on top
+            start: function() {
+                $(this).css("z-index", 2);
+                $("#resizeChatDiv").css("z-index", 1);
+            }
+        }).resizable();
+    });
 </script>
 
 </html>
