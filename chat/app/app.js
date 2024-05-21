@@ -182,7 +182,7 @@ document.getElementById('searchForm').addEventListener('submit', function (event
 
 // Function for dynamically displaying filters on search
 function filterFunction() {
-    var input, filter, div, a, i;
+    let input, filter, div, a, i;
     input = document.getElementById("searchFilter");
     filter = input.value.toUpperCase();
     div = document.getElementById("filterDropdown");
@@ -206,7 +206,7 @@ function filterFunction() {
 
 // Styling for the download formats dropdown menu
 document.querySelector('.download-dropdown-trigger').addEventListener('click', function () {
-    var dropdownContent = this.nextElementSibling;
+    let dropdownContent = this.nextElementSibling;
     if (dropdownContent.style.display === 'block') {
         dropdownContent.style.display = 'none';
     } else {
@@ -216,7 +216,7 @@ document.querySelector('.download-dropdown-trigger').addEventListener('click', f
 
 
 // This needs to be performed after searches as well, so that the list is updated
-document.addEventListener('DOMContentLoaded', function () {
+document.addEventListener('DOMContentLoaded', function () { // Todo fix: Event parameter is unused
     document.getElementById('vdbResultsDownloadFormats').addEventListener('change', function (event) {
         updateDownloadFormats();
     });
@@ -348,12 +348,12 @@ function downloadDataset(uuid) {
 
 // Markdown formatting function
 function customMarkdownImageConversion(elementId, imageUrl, downloadUrl) {
-    var element = document.getElementById(elementId);
+    let element = document.getElementById(elementId);
     if (!element) return;
 
     // Sets download icon to insert empty if dataset has no download option, otherwise updates with icon
     let downloadIcon = ``;
-    if (downloadUrl != false) {
+    if (downloadUrl !== false) { // DownloadIcon is never used...
         downloadIcon = `
             <a href="${downloadUrl}" target="_blank">
                 <div class="download-card-button">
