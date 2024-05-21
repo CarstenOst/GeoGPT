@@ -14,6 +14,16 @@ let datasetsAreaProjectionFormat = {};
 socket.onopen = () => {
     // TODO remove this logging
     console.log('WebSocket connection established');
+
+
+    // Initializes Kartkatalogen with vector database search 'a' for "alfabetical" first example results
+    const message = {
+        action : 'searchFormSubmit',
+        payload : 'a',
+    }
+    socket.send(JSON.stringify(message)); 
+
+
 };
 
 
