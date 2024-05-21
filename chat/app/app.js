@@ -28,22 +28,22 @@ socket.onopen = () => {
 
 
 // Listen for messages
-socket.onmessage = async function(event) {
+socket.onmessage = async function (event) {
     const message = JSON.parse(event.data);
 
-    switch(message.action) {
+    switch (message.action) {
         case "userMessage":
-                // Creates new div for the incoming user message
-                currentUserMessageDiv = document.createElement('div');
+            // Creates new div for the incoming user message
+            currentUserMessageDiv = document.createElement('div');
 
-                // Adds id, class, and appends it to 'chatMessages' div
-                currentUserMessageDiv.id = `message-${chatMessageId}`;
-                currentUserMessageDiv.classList.add('user-message');
-                currentUserMessageDiv.innerHTML += message.payload;
-                document.getElementById('chatMessages').appendChild(currentUserMessageDiv);
+            // Adds id, class, and appends it to 'chatMessages' div
+            currentUserMessageDiv.id = `message-${chatMessageId}`;
+            currentUserMessageDiv.classList.add('user-message');
+            currentUserMessageDiv.innerHTML += message.payload;
+            document.getElementById('chatMessages').appendChild(currentUserMessageDiv);
 
-                // Incremets message id right after response received
-                chatMessageId += 1;
+            // Incremets message id right after response received
+            chatMessageId += 1;
             break;
 
         case "chatStream":
@@ -80,7 +80,7 @@ socket.onmessage = async function(event) {
             // Formats new message markdown contents into html
             customMarkdownImageConversion(currentSystemMessageDiv.id, message.payload.datasetImageUrl, message.payload.datasetDownloadUrl);
             break;
-        
+
         case "formatMarkdown":
             // Formats new message markdown contents into html
             customMarkdownConversion(currentSystemMessageDiv.id);
@@ -88,60 +88,58 @@ socket.onmessage = async function(event) {
 
         case "searchVdbResults":
             const results_div = document.getElementById('results');
-            let results = message.payload;
-            // TODO add dynamic check for boolean value weather download and view icon buttons should or should not be shown
-             const view_results = results.map((result) => ({
-                ...result,
-                url: `https://kartkatalog.geonorge.no/metadata/${result.title}/${result.uuid}`,
-            }));
+            const results = message.payload;
 
-            view_results.forEach((result) => {
-                // Creates new result item with child elements
-                const result_div = document.createElement('div');
-                result_div.classList.add('result-item');
-                result_div.setAttribute('dataset-uuid', result.uuid);
-
-
-                // Adds title with dataset link
-                const title_link = document.createElement('a');
-                title_link.textContent = result.title;
-                title_link.href = result.url;
-                title_link.target = '_blank';
-                result_div.appendChild(title_link);
-
-                // Creates div containing
-                const buttons_container = document.createElement('div');
-                buttons_container.classList.add('result-buttons');
-
-                // Creates the 'show dataset' button
-                if (result.wmsUrl) {
-                    const show_button = document.createElement('div');
-                    show_button.classList.add('show-dataset');
-                    show_button.innerHTML = `<i class="fa-solid fa-map-location-dot show-dataset-icon"></i>
-                        <span class="show-dataset-text">Vis</span>`;
-                    show_button.onclick = () => showDatasetWMS(result.uuid);
-                    buttons_container.appendChild(show_button);
+            // Building the entire HTML in one go
+            const htmlContent = results.map(result => {
+                let hasWmsUrl = result.wmsUrl;
+                const hasDownloads = result.downloadFormats.length > 0;
+                console.log("The app says hasWmsUrl is: " + hasWmsUrl)
+                let buttonsHTML = '';
+                if (hasWmsUrl !== 'None') {
+                    buttonsHTML += `<div class="show-dataset pointer" data-uuid="${result.uuid}" data-type="show" onclick="replaceIframe('${hasWmsUrl}')">
+            <i class="fa-solid fa-map-location-dot show-dataset-icon pointer"></i>
+            <span class="show-dataset-text">Vis</span>
+        </div>`;
                 }
 
-                // Creates the 'download dataset' button
-                if (result.downloadFormats.length > 0) {
-                    const download_button = document.createElement('div');
-                    download_button.classList.add('download-dataset');
-                    download_button.innerHTML = `<i class="fa-solid fa-cloud-arrow-down download-dataset-icon"></i>
-                        <span class="download-dataset-text">Last ned</span>`;
-                    download_button.onclick = () => downloadDataset(result.uuid);
-                    buttons_container.appendChild(download_button);
-
-                    // Adds dataset available download formats to dictionary its list has any elements
-                    datasetsAreaProjectionFormat[result.uuid] = result.downloadFormats;
+                if (hasDownloads) {
+                    buttonsHTML += `<div class="download-dataset" data-uuid="${result.uuid}" data-type="download">
+            <i class="fa-solid fa-cloud-arrow-down download-dataset-icon pointer"></i>
+            <span class="download-dataset-text">Last ned</span>
+        </div>`;
                 }
 
-                // Appends the buttons container to the result div
-                result_div.appendChild(buttons_container);
+                return `
+        <div class="result-item" dataset-uuid="${result.uuid}">
+            <a href="https://kartkatalog.geonorge.no/metadata/${result.title}/${result.uuid}" target="_blank">
+                ${result.title}
+            </a>
+            <div class="result-buttons">
+                ${buttonsHTML}
+            </div>
+        </div>
+    `;
+            }).join('');
 
-                results_div.appendChild(result_div);
+            results_div.innerHTML = htmlContent;
+
+            // Add event listeners to the parent container to handle all child button clicks
+            results_div.addEventListener('click', function (event) {
+                const target = event.target.closest('div[data-uuid]');
+                if (!target) return;
+
+                const uuid = target.dataset.uuid;
+                const type = target.dataset.type;
+
+                if (type === 'show') {
+                    showDatasetWMS(uuid);
+                } else if (type === 'download') {
+                    downloadDataset(uuid);
+                }
             });
 
+            // If necessary, update any other UI components
             updateDownloadFormats();
             break;
 
@@ -151,7 +149,7 @@ socket.onmessage = async function(event) {
 
         default:
             console.log(`Invalid action.`)
-      }
+    }
 
 };
 
@@ -161,40 +159,9 @@ socket.onerror = (error) => {
 };
 
 
-// Listen for chat form submit
-document.getElementById('chatForm').addEventListener('submit', function(event) {
-    // Prevent the default form submission and resubmission
-    event.preventDefault(); 
-    document.getElementById('chatSubmitButton').disabled = true;
-    document.getElementById('chatSubmitButton').className = 'disabled-button';
-    const message = {
-        action : 'chatFormSubmit',
-        payload : document.getElementById('chatInput').value,
-    }
-    
-    // Send the message from the input field, and clears it
-    socket.send(JSON.stringify(message)); 
-    document.getElementById('chatInput').value = '';
-});
-
-
-// Listen for search form submit
-document.getElementById('searchForm').addEventListener('submit', function(event) {
-    // Prevent the default form submission and clears previous search results
-    event.preventDefault(); 
-    // Send the message from the input field, and clears the results
-    document.getElementById('results').innerHTML = '';
-    const message = {
-        action : 'searchFormSubmit',
-        payload : document.getElementById('searchInput').value,
-    }
-    
-    socket.send(JSON.stringify(message)); 
-});
-
 // Function for dynamically displaying filters on search
 function filterFunction() {
-    var input, filter, div, a, i;
+    let input, filter, div, a, i;
     input = document.getElementById("searchFilter");
     filter = input.value.toUpperCase();
     div = document.getElementById("filterDropdown");
@@ -204,10 +171,10 @@ function filterFunction() {
     // If there's no input, hide all links. Otherwise, follow the existing show/hide logic.
     for (i = 0; i < a.length; i++) {
         if (isInputEmpty) {
-        a[i].style.display = "none";
+            a[i].style.display = "none";
         } else {
-        let txtValue = a[i].textContent || a[i].innerText;
-        a[i].style.display = txtValue.toUpperCase().indexOf(filter) > -1 ? "" : "none";
+            let txtValue = a[i].textContent || a[i].innerText;
+            a[i].style.display = txtValue.toUpperCase().indexOf(filter) > -1 ? "" : "none";
         }
     }
 
@@ -215,27 +182,7 @@ function filterFunction() {
     div.style.display = isInputEmpty ? "none" : "block";
 }
 
-
-
-// Styling for the download formats dropdown menu
-document.querySelector('.download-dropdown-trigger').addEventListener('click', function() {
-    var dropdownContent = this.nextElementSibling;
-    if (dropdownContent.style.display === 'block') {
-        dropdownContent.style.display = 'none';
-    } else {
-        dropdownContent.style.display = 'block';
-    }
-});
-
-
-// This needs to be performed after searches as well, so that the list is updated
-document.addEventListener('DOMContentLoaded', function() {
-    document.getElementById('vdbResultsDownloadFormats').addEventListener('change', function(event) {
-        updateDownloadFormats();
-    });
-});
-
-function updateDownloadFormats () {
+function updateDownloadFormats() {
     // Gets formating form field values
     const selectedArea = document.getElementById('searchDownloadArea').value;
     const selectedProjection = document.getElementById('searchDownloadProjection').value;
@@ -251,7 +198,7 @@ function updateDownloadFormats () {
             // Find if there is a match for area, projection, and format (it can be downloaded with selected options)
             const isSupported = dataset.some(area => {
                 const areaMatch = area.name === selectedArea;
-                const projectionAndFormatMatch = area.projections.some(proj => 
+                const projectionAndFormatMatch = area.projections.some(proj =>
                     proj.name === selectedProjection && proj.formats.some(fmt => fmt.name === selectedFormat)
                 );
                 return areaMatch && projectionAndFormatMatch;
@@ -296,8 +243,9 @@ function openModalDownloadFormats() {
 
 
 // Function that updates map WMS
-function showDatasetWMS(uuid) {
+async function showDatasetWMS(uuid) {
     console.log(`Show dataset: ${uuid}`);
+
     const message = {
         action: 'showDataset',
         payload: uuid
@@ -330,9 +278,9 @@ function downloadDataset(uuid) {
     // Checks if the standard format "FGDB" does not exist, set the standard format to the first list element
     let formatObject = projectionObject.formats.find(format => format.name === selectedFormatName);
     const formatName = formatObject.name;
-    const formatCode = ""; 
-    const formatType = ""; 
- 
+    const formatCode = "";
+    const formatType = "";
+
 
     const message = {
         action: 'downloadDataset',
@@ -357,17 +305,14 @@ function downloadDataset(uuid) {
 }
 
 
-
-
-
 // Markdown formatting function
 function customMarkdownImageConversion(elementId, imageUrl, downloadUrl) {
-    var element = document.getElementById(elementId);
+    let element = document.getElementById(elementId);
     if (!element) return;
 
     // Sets download icon to insert empty if dataset has no download option, otherwise updates with icon
     let downloadIcon = ``;
-    if (downloadUrl != false) {
+    if (downloadUrl !== false) { // DownloadIcon is never used...
         downloadIcon = `
             <a href="${downloadUrl}" target="_blank">
                 <div class="download-card-button">
@@ -397,12 +342,12 @@ function customMarkdownImageConversion(elementId, imageUrl, downloadUrl) {
             </form>
         </div>
         `;
-        /*
-        Should be added above
-        <div class="formats-dropdown">
-            Format dropdown here
-        </div>
-        */
+    /*
+    Should be added above
+    <div class="formats-dropdown">
+        Format dropdown here
+    </div>
+    */
     htmlContent = htmlContent.replace(/\[bilde\]/g, replacementHtml);
 
     element.innerHTML = htmlContent;
@@ -410,7 +355,7 @@ function customMarkdownImageConversion(elementId, imageUrl, downloadUrl) {
 
 // Formats the message markdown into html after stream is complete
 function customMarkdownConversion(elementId) {
-    var element = document.getElementById(elementId);
+    let element = document.getElementById(elementId);
     if (element) {
         let htmlContent = element.innerHTML;
 
@@ -456,36 +401,6 @@ function customMarkdownConversion(elementId) {
         element.innerHTML = htmlContent;
     }
 }
-
-
-
-// Makes the chat and search containers dragable and resizable
-$(document).ready(function() {
-    $("#resizeChatDiv").draggable({
-        handle: ".chat-drag-handle",
-        containment: "window",
-
-        // Makes the active card be on top
-        start: function() {
-            $(this).css("z-index", 2);
-            $("#resizeSearchDiv").css("z-index", 1);
-        }
-    }).resizable();
-});
-
-$(document).ready(function() {
-    $("#resizeSearchDiv").draggable({
-        handle: ".search-drag-handle",
-        containment: "window",
-
-        // Makes the active card be on top
-        start: function() {
-            $(this).css("z-index", 2);
-            $("#resizeChatDiv").css("z-index", 1);
-        }
-    }).resizable();
-});
-
 
 
 

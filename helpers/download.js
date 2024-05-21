@@ -1,5 +1,6 @@
 // Require node-fetch
 const fetch = require('node-fetch');
+const {get_wms} = require("./fetch_valid_download_api_data");
 
 
 async function fetchAreaData(uuid) {
@@ -127,7 +128,7 @@ async function getStandardOrFirstFormat(uuid) {
 async function getDownloadUrl(metadataUuid, downloadFormats) {
     const email = ""; // Email address
     const softwareClient = "GeoGpt"; // Software client
-    const softwareClientVersion = "15.7.2602"; // Software client version
+    const softwareClientVersion = "0.1.0"; // Software client version
 
     // Output the download format values
     console.log(`The Area is set to: ${downloadFormats.areaName}`);
@@ -204,12 +205,11 @@ async function getDatasetDownloadAndWmsStatus(vdbSearchResponse) {
     // Parallel async API check of all datasets downloadability, which is added to the objects
     const downloadPromises = vdbSearchResponse.map(dataset => {
         return fetchAreaData(dataset.uuid)
-            .then(formatsApiResponseList => {
-
+            .then(async formatsApiResponseList => {
                 return {
                     ...dataset,
                     downloadFormats: formatsApiResponseList,
-                    wmsUrl: true // TODO this needs updating to use API check function at later date
+                    wmsUrl: await get_wms(dataset.uuid) // TODO this needs updating to use API check function at later date
                 };
 
             });
