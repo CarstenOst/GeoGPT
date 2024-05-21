@@ -101,9 +101,11 @@ async function fetch_get_data_api(uuid) {
  * @returns {Promise<*|string>} string 'None' if none was found, else ready wms url
  */
 async function get_wms(uuid) {
-    let raw = await fetch_get_data_api(uuid)
+
     try {
-        return raw.Distributions.RelatedViewServices[0].MapUrl;
+        let raw = await fetch_get_data_api(uuid)
+        let res = raw.Distributions.RelatedViewServices[0].MapUrl
+        return res ?? 'None';
     }
     catch (e) {
         return 'None'
