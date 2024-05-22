@@ -202,12 +202,7 @@
     });
 
 
-    // This needs to be performed after searches as well, so that the list is updated
-    document.addEventListener('DOMContentLoaded', function () { // Todo fix: Event parameter is unused
-        document.getElementById('vdbResultsDownloadFormats').addEventListener('change', function (event) {
-            updateDownloadFormats();
-        });
-    });
+
 
 
     // Listen for chat form submit
