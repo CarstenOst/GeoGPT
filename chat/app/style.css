@@ -106,10 +106,9 @@ body {
     max-width: 85%;
     text-align: left;
     /*
-    */
     color: white;
     background-color: rgb(33, 50, 50);
-
+    */
     border-radius: 5px;
     /*
     Need to find solution to message text padding without image padding
