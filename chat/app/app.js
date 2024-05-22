@@ -84,7 +84,7 @@ socket.onmessage = async function (event) {
             const htmlContent = results.map(result => {
                 let hasWmsUrl = result.wmsUrl;
                 const hasDownloads = result.downloadFormats.length > 0;
-                console.log("The app says hasWmsUrl is: " + hasWmsUrl)
+                //console.log("The app says hasWmsUrl is: " + hasWmsUrl)
                 let buttonsHTML = '';
                 if (hasWmsUrl !== 'None') {
                     buttonsHTML += `<div class="show-dataset pointer" data-uuid="${result.uuid}" data-type="show" onclick="replaceIframe('${hasWmsUrl}')">
@@ -94,6 +94,10 @@ socket.onmessage = async function (event) {
                 }
 
                 if (hasDownloads) {
+                    if (result.downloadFormats.length > 0) {
+                        // Adds dataset available download formats to dictionary its list has any elements
+                        datasetsAreaProjectionFormat[result.uuid] = result.downloadFormats;
+                    }
                     buttonsHTML += `<div class="download-dataset" data-uuid="${result.uuid}" data-type="download">
             <i class="fa-solid fa-cloud-arrow-down download-dataset-icon pointer"></i>
             <span class="download-dataset-text">Last ned</span>
@@ -392,6 +396,13 @@ function customMarkdownConversion(elementId) {
     }
 }
 
+
+// This needs to be performed after searches as well, so that the list is updated
+document.addEventListener('DOMContentLoaded', function () { // Todo fix: Event parameter is unused
+    document.getElementById('vdbResultsDownloadFormats').addEventListener('change', function (event) {
+        updateDownloadFormats();
+    });
+});
 
 
 
