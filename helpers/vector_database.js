@@ -14,7 +14,7 @@ async function vectorSearch(vectorArray){
     const { rows } = await client.query(
       `SELECT uuid, title, title_vector <-> $1 AS distance 
          FROM text_embedding_3_large 
-         ORDER BY title_vector <-> $1 LIMIT 20`,
+         ORDER BY title_vector <-> $1 LIMIT 6`,
       searchVector
     );
   
