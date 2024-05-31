@@ -1,6 +1,6 @@
 @echo off
 
-SET CONTAINER_NAME=pgvector_container
+SET CONTAINER_NAME=pgvector_container_all
 SET IMAGE_NAME=pgvector/pgvector:pg16
 
 REM Check if the container is running and stop it if it is
