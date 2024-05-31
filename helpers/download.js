@@ -131,7 +131,7 @@ async function getDownloadUrl(metadataUuid, downloadFormats) {
     const softwareClientVersion = "0.1.0"; // Software client version
 
     // Output the download format values
-    console.log(`The Area is set to: ${downloadFormats.areaName}`);
+    /*console.log(`The Area is set to: ${downloadFormats.areaName}`);
     console.log(`The Area is set to: ${downloadFormats.areaCode}`);
     console.log(`The Area is set to: ${downloadFormats.areaType}`);
     console.log(`The Projection is set to: ${downloadFormats.projectionName}`);
@@ -142,7 +142,7 @@ async function getDownloadUrl(metadataUuid, downloadFormats) {
     console.log(`The Format is set to: ${downloadFormats.formatType}`); // TODO possibly optional and can be removed?
     console.log(`The UserGroup is set to: ${downloadFormats.userGroup}`);
     console.log(`The UsagePurpose is set to: ${downloadFormats.usagePurpose}`);
-
+*/
 
     // Download order body JSON structure
     const orderRequest = {
