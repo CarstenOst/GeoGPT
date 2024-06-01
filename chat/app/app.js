@@ -323,7 +323,7 @@ function customMarkdownImageConversion(elementId, imageUrl, downloadUrl) {
         <div class="card-image-container"> 
             <img src="${imageUrl}" alt="Bilde" width="100%"/> 
             <div class="show-card-button">
-                <i class="fa-solid fa-map-location-dot card-icon"></i>Vis
+                <i class="fa-solid fa-map-location-dot card-icon" onclick=""></i>Vis
             </div> 
             <a href="${downloadUrl}" target="_blank">
                 <div class="download-card-button">

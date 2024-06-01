@@ -57,15 +57,27 @@ server.on('connection', socket => {
             case "searchFormSubmit":
                 const query = data.payload;
                 try {
+                    console.time("Total time")
+
+                    //console.time("vdb")
                     // Searches the vector database using the query from the message payload
                     const vdbSearchResponse = await getVdbSearchResponse(query);
+                    //console.timeEnd("vdb")
+                    console.time("datasetsWithDownload")
                     const datasetsWithDownloadAndWmsStatus = await getDatasetDownloadAndWmsStatus(vdbSearchResponse);
+                    console.timeEnd("datasetsWithDownload")
 
                     //console.log(`Vector database results:\n${Object.keys(vdbSearchResponse[0])}\n\n${Object.values(vdbSearchResponse[0])}`);
                     //console.log(`Vector database results:\n${Object.keys(datasetsWithDownloadAndWmsStatus[0])}\n\n${Object.values(datasetsWithDownloadAndWmsStatus[0])}`);
 
+                    console.time("send websocket")
                     // Sends the VDB results to the client for display over the socket
                     await sendWebsocketMessage('searchVdbResults', datasetsWithDownloadAndWmsStatus, socket);
+                    console.timeEnd("send websocket")
+                    console.timeEnd("Total time")
+                    console.log(" ")
+                    console.log(" ")
+
                 } catch (error) {
                     console.log(`Server controller failed to get the VDB results, or send them to the client: ${error.message}`);
                     console.log(`Server controller VDB stack trace: ${error.stack}`);
