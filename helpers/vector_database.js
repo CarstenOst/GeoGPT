@@ -11,15 +11,15 @@ pgvector.registerType(client);
 
 
 // Function for the search box
-async function vectorSearch(vectorArray){
+async function vectorSearch(vectorArray, type = "dataset"){
     console.time("VectorSearch")
     // Perform the search with the vectorized input
     const searchVector = [pgvector.toSql(vectorArray)];
     const { rows } = await client.query(
       `SELECT uuid, title, type, title_vector  <-> $1 AS distance 
          FROM ${table_to_use} 
-         WHERE type = 'dataset'
-         ORDER BY title_vector <-> $1 LIMIT 60`,
+         WHERE type = '${type}'
+         ORDER BY title_vector <-> $1 LIMIT 10`,
       searchVector
     );
     console.timeEnd("VectorSearch")
@@ -47,10 +47,10 @@ async function getVdbResponse(userQuestion) {
     return await RagVectorSearch(vectorizedInputFromUser);
 }
 
-async function getVdbSearchResponse(query) {
+async function getVdbSearchResponse(query, filter_type) {
     const jsonInputFromOpenAi = await fetchOpenAIEmbeddings(query);
     const vectorizedInputFromUser = jsonInputFromOpenAi.data[0].embedding;
-    return await vectorSearch(vectorizedInputFromUser);
+    return await vectorSearch(vectorizedInputFromUser, filter_type);
 }
 
 
