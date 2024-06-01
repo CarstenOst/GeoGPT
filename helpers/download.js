@@ -13,12 +13,13 @@ async function fetchAreaData(uuid) {
 
     // Aborts if the response was not valid
     if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
+        //return []; // TODO add some error-handling
+        throw new Error(`HTTP error! status: ${response.status}`);
     }
 
     // Checks is API response is html page for login (dataset requires login)
     if (response.url.includes('https://auth2.geoid.no')) {
-        console.log(`Dataset requires authentication, API response is HTML login page. Uuid: ${uuid})}`);
+        //console.log(`Dataset requires authentication, API response is HTML login page. Uuid: ${uuid})}`);
         return [];
     }
 
@@ -202,7 +203,7 @@ async function getDownloadUrl(metadataUuid, downloadFormats) {
 
 
 async function getDatasetDownloadAndWmsStatus(vdbSearchResponse) {
-    // Parallel async API check of all datasets downloadability, which is added to the objects
+    // Parallel async API check of all datasets download ability, which is added to the objects
     const downloadPromises = vdbSearchResponse.map(dataset => {
         return fetchAreaData(dataset.uuid)
             .then(async formatsApiResponseList => {
@@ -211,20 +212,12 @@ async function getDatasetDownloadAndWmsStatus(vdbSearchResponse) {
                     downloadFormats: formatsApiResponseList,
                     wmsUrl: await get_wms(dataset.uuid) // TODO this needs updating to use API check function at later date
                 };
-
             });
     });
 
     // Waits for the promises to be resolved before continuing
-    const apiVerifiedSearchResponse = await Promise.all(downloadPromises);
-
-
-    return apiVerifiedSearchResponse;
+    return await Promise.all(downloadPromises);
 }
-
-
-
-
 
 
 module.exports = { getStandardOrFirstFormat, getDownloadUrl, datasetHasDownload, getDatasetDownloadAndWmsStatus };
