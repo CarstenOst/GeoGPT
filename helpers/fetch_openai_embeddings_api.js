@@ -6,6 +6,7 @@ const fs = require('fs');
 
 
 const fetchOpenAIEmbeddings = async (inputText) => {
+  console.time("Openai embedding response")
   //appendToCsv(inputText);
   const response = await fetch('https://api.openai.com/v1/embeddings', {
     method: 'POST',
@@ -24,6 +25,8 @@ const fetchOpenAIEmbeddings = async (inputText) => {
     const errorBody = await response.text();
     throw new Error(`Network response failed: ${response.status} ${response.statusText} - ${errorBody}`);
   }
+
+  console.timeEnd("Openai embedding response")
 
   return response.json();
 };
