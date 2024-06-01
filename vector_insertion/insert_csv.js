@@ -101,6 +101,6 @@ async function insertCSVDataModified(filePath, tableName) {
 }
 
 // Call the function
-insertCSVDataModified('./vector_creation/all_columns_vectorized.csv', tableName)
+insertCSVDataModified('../vector_creation/text-embedding-3-large_title-keyword.csv', tableName)
   .then(() => console.log('Operation completed.'))
   .catch(err => console.error('Error:', err));
