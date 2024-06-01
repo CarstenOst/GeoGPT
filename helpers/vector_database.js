@@ -16,9 +16,10 @@ async function vectorSearch(vectorArray){
     // Perform the search with the vectorized input
     const searchVector = [pgvector.toSql(vectorArray)];
     const { rows } = await client.query(
-      `SELECT uuid, title, title_vector  <-> $1 AS distance 
+      `SELECT uuid, title, type, title_vector  <-> $1 AS distance 
          FROM ${table_to_use} 
-         ORDER BY title_vector <-> $1 LIMIT 6`,
+         WHERE type = 'dataset'
+         ORDER BY title_vector <-> $1 LIMIT 60`,
       searchVector
     );
     console.timeEnd("VectorSearch")
