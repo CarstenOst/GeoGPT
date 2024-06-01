@@ -11,8 +11,8 @@ const knex = require('knex')({
   }
 });
 
-const tableName = 'text_embedding_3_large'; // Adjust according to your actual table name
-const filePath = '../vector_creation/all_columns_vectorized.csv'; // Adjust according to your actual file path
+const tableName = 'text_embedding_3_large_rs'; // Adjust according to your actual table name
+const filePath = '../vector_creation/text-embedding-3-large_title-keyword.csv'; // Adjust according to your actual file path
 
 async function insertCSVData(filePath, tableName) {
   const dataToInsert = [];
@@ -77,7 +77,7 @@ async function insertCSVDataModified(filePath, tableName) {
         // Delete the existing table if it exists and create a new one
         try {
           await knex.raw(`DROP TABLE IF EXISTS ${tableName};`);
-          await knex.raw(`CREATE EXTENSION IF NOT EXISTS vector;`)
+          await knex.raw(`CREATE EXTENSION IF NOT EXISTS vectors;`)
           await knex.raw(createTableQuery);
           console.log('Table created successfully');
 
@@ -101,6 +101,6 @@ async function insertCSVDataModified(filePath, tableName) {
 }
 
 // Call the function
-insertCSVDataModified('./vector_creation/all_columns_vectorized.csv', tableName)
+insertCSVDataModified(filePath, tableName)
   .then(() => console.log('Operation completed.'))
   .catch(err => console.error('Error:', err));
